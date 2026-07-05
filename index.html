@@ -2895,14 +2895,23 @@
   const fmtRango = r => r ? (r.desde === r.hasta ? String(r.desde) : r.desde + '-' + r.hasta) : '';
 
   // Ubicación jerárquica: Lote → Línea(s) → Palma(s) + GPS
+  // Registros de sesión NFC guardan cada punto en l.puntos[]; se muestra "📍 N pts" hacia el primero
   function fmtUbicacion(l) {
-    if (!l.lote && !l.gps) return '—';
+    const tienePuntos = l.puntos && l.puntos.length;
+    if (!l.lote && !l.gps && !tienePuntos) return '—';
     let u = l.lote ? 'L' + l.lote : '';
     const ln = l.lineaR || (l.linea ? { desde: l.linea, hasta: l.linea } : null);
     const pm = l.palmaR || (l.palma ? { desde: l.palma, hasta: l.palma } : null);
     if (ln) u += ' · Ln' + fmtRango(ln);
     if (pm) u += ' · P' + fmtRango(pm);
-    if (l.gps && l.gps.lat) {
+    if (tienePuntos) {
+      // Sesión NFC: enlaza al primer punto con GPS y muestra cuántos se capturaron
+      const conGps = l.puntos.filter(p => p.lat != null);
+      if (conGps.length) {
+        const lat = conGps[0].lat.toFixed(5), lng = conGps[0].lng.toFixed(5);
+        u += ` <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" title="${conGps.length} de ${l.puntos.length} palmas con GPS — abrir la primera en Google Maps" style="text-decoration:none">📍</a><span style="color:var(--texto-dim); font-size:10.5px"> ${conGps.length} pts</span>`;
+      }
+    } else if (l.gps && l.gps.lat) {
       const lat = l.gps.lat.toFixed(5), lng = l.gps.lng.toFixed(5);
       u += ` <a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" title="${lat}, ${lng} — abrir en Google Maps" style="text-decoration:none">📍</a><span style="color:var(--texto-dim); font-size:10.5px"> ${lat},${lng}</span>`;
     }
@@ -4261,10 +4270,18 @@
   let nfcActividad = null;
   let nfcGPS = null;
   let nfcContador = 0;
+  // Agrupación por sesión: cada sesión NFC crea 1 registro por (actividad|lote|trabajador),
+  // acumulando cantidad y guardando cada punto GPS por dentro (arreglo puntos[])
+  let nfcSesionId = null;
+  let nfcSesionRegs = {};
+  let nfcSesionSeq = 0;
 
   function abrirModoNFC(moduloKey) {
     nfcModulo = moduloKey;
     nfcContador = 0;
+    nfcSesionId = Date.now().toString();
+    nfcSesionRegs = {};
+    nfcSesionSeq = 0;
     const m = modulosActividad[moduloKey] || { titulo: moduloKey, icono: '📡' };
     const acts = actividadesPorModulo[moduloKey] || [];
     nfcActividad = acts[0];
@@ -4355,29 +4372,64 @@
     const linea = parseInt(document.getElementById('nfc-linea').value) || null;
     const fecha = new Date().toISOString().slice(0,10);
 
-    const t = tarifaVigente(nfcActividad, fecha);
-    const costo = (t && t.tipo === 'Por unidad (destajo)') ? t.valor : 0;
+    const t = tarifaVigente(nfcActividad, fecha, trabajador);
+    const tarifaUnit = (t && t.tipo === 'Por unidad (destajo)') ? t.valor : 0;
 
-    labores.unshift({
-      id: Date.now().toString(),
-      actividad: nfcActividad,
-      lote, linea, palma: null,
-      fecha, cantidad: 1,
-      trabajador, costo,
-      obs: '', estado: 'pendiente',
-      gps: nfcGPS ? { ...nfcGPS } : null
-    });
+    // Punto individual (GPS + hora + línea) que se guarda DENTRO del registro de sesión
+    const punto = {
+      lat: nfcGPS ? nfcGPS.lat : null,
+      lng: nfcGPS ? nfcGPS.lng : null,
+      linea,
+      hora: new Date().toISOString()
+    };
+
+    // Una fila por (actividad|lote|trabajador) dentro de la sesión: si cambia cualquiera, nueva fila
+    const key = nfcActividad + '|' + (lote || '') + '|' + (trabajador || '');
+    let reg = nfcSesionRegs[key];
+
+    if (reg) {
+      reg.cantidad += 1;
+      reg.puntos.push(punto);
+      if (linea) {
+        reg.lineaR = reg.lineaR
+          ? { desde: Math.min(reg.lineaR.desde, linea), hasta: Math.max(reg.lineaR.hasta, linea) }
+          : { desde: linea, hasta: linea };
+        reg.linea = reg.lineaR.desde;
+      }
+      if (tarifaUnit) reg.costo = reg.cantidad * tarifaUnit;
+    } else {
+      reg = {
+        id: 'nfc_' + nfcSesionId + '_' + (nfcSesionSeq++),
+        actividad: nfcActividad,
+        lote,
+        lineaR: linea ? { desde: linea, hasta: linea } : null,
+        linea: linea || null,
+        palma: null,
+        fecha,
+        cantidad: 1,
+        trabajador,
+        costo: tarifaUnit,
+        obs: '',
+        estado: 'pendiente',
+        origen: 'NFC',
+        sesionId: nfcSesionId,
+        puntos: [punto]
+      };
+      nfcSesionRegs[key] = reg;
+      labores.unshift(reg);
+    }
     saveLabores();
 
     nfcContador++;
     document.getElementById('nfc-contador').textContent = nfcContador;
 
     const hora = new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    const coords = nfcGPS ? `📍 ${nfcGPS.lat.toFixed(5)}, ${nfcGPS.lng.toFixed(5)}` : '';
+    const coords = (punto.lat != null) ? `📍 ${punto.lat.toFixed(5)}, ${punto.lng.toFixed(5)}` : '';
     const log = document.getElementById('nfc-log');
     log.innerHTML = `<div style="padding:8px 12px; background:rgba(82,183,136,0.08); border:1px solid rgba(82,183,136,0.25); border-radius:8px; margin-bottom:6px; font-size:12.5px">
       ✓ <strong>${nfcActividad}</strong> · ${lote ? 'L'+lote : 'sin lote'}${linea ? ' Ln'+linea : ''} · ${hora}
-      ${costo ? ' · '+fmtCOP(costo) : ''}
+      ${tarifaUnit ? ' · '+fmtCOP(tarifaUnit) : ''}
+      <span style="color:var(--dorado-claro)"> · sesión: ${reg.cantidad} palma${reg.cantidad>1?'s':''}</span>
       ${coords ? `<br><span style="color:var(--texto-dim); font-size:11px; font-family:monospace">${coords}</span>` : ''}
     </div>` + log.innerHTML;
 
