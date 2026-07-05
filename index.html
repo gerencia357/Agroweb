@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroWeb — Valparaíso</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-text">
+      <div class="logo-mark">Agro<span>Web</span></div>
+      <div class="logo-sub">Gestión palmicultora</div>
+    </div>
+    <div class="logo-icon">🌴</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)" title="Dashboard">
+      <span class="nav-icon">🌿</span> <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('mapa', this)" title="Mapa de palmas">
+      <span class="nav-icon">🗺️</span> <span class="nav-label">Mapa de palmas</span>
+    </div>
+    <div class="nav-item" onclick="showPage('labores', this)" title="Historial de labores">
+      <span class="nav-icon">📋</span> <span class="nav-label">Historial labores</span>
+    </div>
+
+    <div class="nav-section">Campo</div>
+    <div class="nav-item" onclick="showPage('polinizacion', this)" title="Polinización">
+      <span class="nav-icon">🌸</span> <span class="nav-label">Polinización</span>
+    </div>
+    <div class="nav-item" onclick="showPage('mantenimiento', this)" title="Mantenimiento">
+      <span class="nav-icon">✂️</span> <span class="nav-label">Mantenimiento</span>
+    </div>
+    <div class="nav-item" onclick="showPage('fertilizacion', this)" title="Fertilización">
+      <span class="nav-icon">🌱</span> <span class="nav-label">Fertilización</span>
+    </div>
+    <div class="nav-item" onclick="showPage('sanidad', this)" title="Sanidad">
+      <span class="nav-icon">🔬</span> <span class="nav-label">Sanidad</span>
+    </div>
+    <div class="nav-item" onclick="showPage('cosecha', this)" title="Cosecha RFF">
+      <span class="nav-icon">🌴</span> <span class="nav-label">Cosecha RFF</span>
+    </div>
+
+    <div class="nav-section">Industria</div>
+    <div class="nav-item" onclick="showPage('bascula', this)" title="Báscula">
+      <span class="nav-icon">⚖️</span> <span class="nav-label">Báscula</span>
+    </div>
+
+    <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="showPage('presupuesto', this)" title="Presupuesto">
+      <span class="nav-icon">💰</span> <span class="nav-label">Presupuesto</span>
+    </div>
+
+    <div class="nav-section">Inteligencia</div>
+    <div class="nav-item" onclick="showPage('coroz', this)" title="Coroz:IA">
+      <span class="nav-icon">🤖</span> <span class="nav-label">Coroz:IA</span>
+    </div>
+
+    <div class="nav-section">Configuración</div>
+    <div class="nav-item" onclick="showPage('lotes', this)" title="Lotes">
+      <span class="nav-icon">🏞️</span> <span class="nav-label">Lotes</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('enfermedades', this)" title="Enfermedades y plagas">
+      <span class="nav-icon">🦠</span> <span class="nav-label">Enfermedades</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('trabajadores', this)" title="Trabajadores">
+      <span class="nav-icon">👷</span> <span class="nav-label">Trabajadores</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('labores_cat', this)" title="Catálogo de labores">
+      <span class="nav-icon">🗂️</span> <span class="nav-label">Catálogo labores</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('tarifas', this)" title="Tarifas">
+      <span class="nav-icon">💲</span> <span class="nav-label">Tarifas</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('vehiculos', this)" title="Vehículos">
+      <span class="nav-icon">🚛</span> <span class="nav-label">Vehículos</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('insumos', this)" title="Insumos">
+      <span class="nav-icon">🧪</span> <span class="nav-label">Insumos</span>
+    </div>
+    <div class="nav-item" onclick="showPage('formularios', this)" title="Formularios">
+      <span class="nav-icon">📝</span> <span class="nav-label">Formularios</span>
+    </div>
+    <div class="nav-item" onclick="irMaestro('usuarios', this)" title="Usuarios y permisos">
+      <span class="nav-icon">🔐</span> <span class="nav-label">Usuarios</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">S</div>
+      <div class="user-info">
+        <div class="user-name">Santiago</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="sidebar-backdrop" onclick="document.body.classList.remove('sidebar-open')"></div>
+
+<!-- LOGIN -->
+<div id="login-overlay" style="display:none; position:fixed; inset:0; background:var(--fondo); z-index:500; align-items:center; justify-content:center">
+  <div style="width:380px; max-width:92vw">
+    <div style="text-align:center; margin-bottom:28px">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:32px; font-weight:700">Agro<span style="color:var(--verde-claro)">Web</span></div>
+      <div style="font-size:12px; color:var(--texto-suave); letter-spacing:1px; text-transform:uppercase; margin-top:4px">🌴 Valparaíso · Maní, Casanare</div>
+    </div>
+    <div style="background:var(--fondo-card); border:1px solid var(--borde); border-radius:16px; padding:28px">
+      <div class="field" style="margin-bottom:16px">
+        <label>Usuario</label>
+        <select id="login-usuario" style="width:100%"></select>
+      </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>PIN</label>
+        <input type="password" id="login-pin" placeholder="••••" maxlength="6" inputmode="numeric" style="width:100%; font-size:20px; letter-spacing:8px; text-align:center" onkeydown="if(event.key==='Enter') ingresar()">
+      </div>
+      <div id="login-error" style="display:none; font-size:12.5px; color:var(--rojo); margin-bottom:12px; text-align:center">PIN incorrecto</div>
+      <button class="btn-save" style="width:100%; padding:12px; font-size:14px" onclick="ingresar()">Ingresar</button>
+    </div>
+    <div style="text-align:center; margin-top:14px; font-size:11.5px; color:var(--texto-dim)">Demo: Santiago (Admin) PIN 1234 · José (Supervisor) 1111 · Ana (Báscula) 2222 · Carlos (Campo) 3333</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:14px">
+      <button class="btn-toggle-sidebar" onclick="toggleSidebar()" title="Contraer/expandir menú" id="btn-toggle">◀</button>
+      <div class="topbar-title" id="topbar-title">Dashboard general</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="if(confirm('¿Recargar los datos de demostración? Esto reemplaza todos los datos actuales.')) cargarDemo()" title="Recargar datos demo">🎬 Demo</button>
+      <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="if(confirm('¿Borrar TODOS los datos y empezar de cero?')) { localStorage.clear(); location.reload(); }" title="Limpiar todo">🧹</button>
+      <div class="finca-badge">🌴 Valparaíso · Maní, Casanare</div>
+      <button class="btn-coroz" onclick="showPage('coroz', null)">🤖 Coroz:IA</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Resumen operativo</div>
+          <div class="page-sub">Actualizado hoy · Julio 2026</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card verde">
+          <div class="kpi-label">Hectáreas totales</div>
+          <div class="kpi-value">2.094</div>
+          <div class="kpi-sub">Maní, Casanare</div>
+        </div>
+        <div class="kpi-card dorado">
+          <div class="kpi-label">Palmas registradas</div>
+          <div class="kpi-value">0</div>
+          <div class="kpi-sub">Pendiente georeferenciación</div>
+        </div>
+        <div class="kpi-card naranja">
+          <div class="kpi-label">Labores este mes</div>
+          <div class="kpi-value">0</div>
+          <div class="kpi-sub">Sin registros aún</div>
+        </div>
+        <div class="kpi-card azul">
+          <div class="kpi-label">Trabajadores activos</div>
+          <div class="kpi-value">0</div>
+          <div class="kpi-sub">Por configurar</div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Actividad reciente</div>
+            <button class="panel-action">Ver todo</button>
+          </div>
+          <div class="panel-body">
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--verde-claro)"></div>
+                <div>
+                  <div class="activity-text">Sistema AgroWeb iniciado para Valparaíso</div>
+                  <div class="activity-time">Hoy · Primer acceso</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--dorado)"></div>
+                <div>
+                  <div class="activity-text">Configure los lotes y cargue el mapa desde AvenZQ para comenzar</div>
+                  <div class="activity-time">Pendiente</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background: var(--azul)"></div>
+                <div>
+                  <div class="activity-text">Registre los trabajadores y asigne roles de acceso</div>
+                  <div class="activity-time">Pendiente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Labores por tipo</div>
+            <button class="panel-action">Este mes</button>
+          </div>
+          <div class="panel-body">
+            <div class="labores-chart">
+              <div class="labor-row">
+                <div class="labor-name">Polinización</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: var(--verde-claro)"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+              <div class="labor-row">
+                <div class="labor-name">Poda</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: var(--dorado)"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+              <div class="labor-row">
+                <div class="labor-name">Plateo</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: var(--naranja)"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+              <div class="labor-row">
+                <div class="labor-name">Cosecha RFF</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: var(--azul)"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+              <div class="labor-row">
+                <div class="labor-name">Censo enf.</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: var(--rojo)"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+              <div class="labor-row">
+                <div class="labor-name">Sanidad</div>
+                <div class="labor-bar-wrap"><div class="labor-bar" style="width:0%; background: #9b5de5"></div></div>
+                <div class="labor-count">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">Lotes registrados</div>
+          <button class="btn-primary" style="margin-top:0; padding: 6px 14px; font-size:12px">+ Nuevo lote</button>
+        </div>
+        <div class="panel-body">
+          <table class="lotes-table">
+            <thead>
+              <tr>
+                <th>Lote</th>
+                <th>Hectáreas</th>
+                <th>Palmas</th>
+                <th>Variedad</th>
+                <th>Estado</th>
+                <th>Última labor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" style="text-align:center; color: var(--texto-dim); padding: 32px">
+                  No hay lotes registrados — cargue el mapa desde AvenZQ para comenzar
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="page" id="page-mapa">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Mapa de palmas</div>
+          <div class="page-sub">Georeferenciación de lotes y palmas individuales</div>
+        </div>
+        <button class="btn-primary" style="margin-top:0">📁 Importar KML / GeoJSON</button>
+      </div>
+
+      <div class="map-placeholder">
+        <div class="map-placeholder-icon">🗺️</div>
+        <div class="map-placeholder-text">Mapa de Valparaíso</div>
+        <div class="map-placeholder-sub">Exporte su archivo KML o GeoJSON desde AvenZQ e impórtelo aquí</div>
+        <div class="map-placeholder-sub">Cada palma aparecerá como un punto con su historial de labores</div>
+        <button class="btn-primary">Importar archivo de mapa</button>
+      </div>
+    </div>
+
+    <!-- FORMULARIOS -->
+    <div class="page" id="page-formularios">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Formularios de campo</div>
+          <div class="page-sub">Formularios personalizados conectados a los maestros + tarjetas NFC estándar</div>
+        </div>
+        <button class="btn-primary" style="margin-top:0" onclick="abrirFormBuilder()">+ Nuevo formulario</button>
+      </div>
+
+      <div style="font-size:13px; font-weight:600; color:var(--verde-claro); margin-bottom:12px; font-family:'Space Grotesk',sans-serif">Mis formularios personalizados</div>
+      <div class="form-grid" id="custom-forms-grid">
+        <div class="empty-lotes" style="padding:28px">
+          <div style="font-size:32px; margin-bottom:8px">📝</div>
+          <div class="empty-lotes-text">Sin formularios personalizados</div>
+          <div class="empty-lotes-sub">Crea formularios que jalan datos de tus maestros: trabajadores, lotes, labores, vehículos e insumos</div>
+        </div>
+      </div>
+
+      <div style="font-size:13px; font-weight:600; color:var(--texto-suave); margin:24px 0 12px; font-family:'Space Grotesk',sans-serif">Tarjetas NFC estándar</div>
+      <div class="form-grid">
+        <div class="form-card">
+          <div class="form-card-icon">🌸</div>
+          <div class="form-card-name">Polinización ANA 1</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🌸</div>
+          <div class="form-card-name">Polinización ANA 2</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🌸</div>
+          <div class="form-card-name">Polinización ANA 3</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">✂️</div>
+          <div class="form-card-name">Poda</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🌱</div>
+          <div class="form-card-name">Plateo</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🌴</div>
+          <div class="form-card-name">Cosecha RFF</div>
+          <div class="form-card-type">Tarjeta NFC · Registro rápido</div>
+          <div class="form-card-fields">GPS automático · Trabajador · Fecha/hora</div>
+          <div class="form-card-tag tag-rapida">⚡ Rápida</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🦠</div>
+          <div class="form-card-name">Censo Enfermedades</div>
+          <div class="form-card-type">Tarjeta NFC · Con formulario</div>
+          <div class="form-card-fields">Checklist: PC, Marchitez, Anillo Rojo, Pestalotiopsis + severidad + foto</div>
+          <div class="form-card-tag tag-formulario">📋 Formulario</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">🐛</div>
+          <div class="form-card-name">Censo Plagas</div>
+          <div class="form-card-type">Tarjeta NFC · Con formulario</div>
+          <div class="form-card-fields">Checklist: Rhynchophorus, Strategus, Opsiphanes + cantidad + foto</div>
+          <div class="form-card-tag tag-formulario">📋 Formulario</div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-icon">💊</div>
+          <div class="form-card-name">Sanidad</div>
+          <div class="form-card-type">Tarjeta NFC · Con formulario</div>
+          <div class="form-card-fields">Tipo intervención · Producto · Dosis · Observación · Foto</div>
+          <div class="form-card-tag tag-formulario">📋 Formulario</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LABORES -->
+    <div class="page" id="page-labores">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Historial de labores</div>
+          <div class="page-sub" id="labores-sub">Vista consolidada de todas las actividades registradas</div>
+        </div>
+        <button class="btn-primary" style="margin-top:0" onclick="abrirModalLabor()">+ Registrar labor</button>
+      </div>
+      <div class="panel-full">
+        <div class="panel-body" id="labores-lista"></div>
+      </div>
+    </div>
+
+    <!-- BASCULA -->
+    <div class="page" id="page-bascula">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Báscula — Despacho RFF</div>
+          <div class="page-sub" id="bascula-sub">Pesaje de vehículos y trazabilidad de fruta a planta</div>
+        </div>
+        <button class="btn-primary" style="margin-top:0" onclick="abrirModalPesaje()">+ Nuevo pesaje</button>
+      </div>
+
+      <div class="lotes-resumen">
+        <div class="resumen-chip">
+          <div class="resumen-val" id="bas-viajes">0</div>
+          <div class="resumen-label">Viajes hoy</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="bas-neto-hoy">0</div>
+          <div class="resumen-label">Kg netos hoy</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="bas-neto-mes" style="color:var(--dorado-claro)">0</div>
+          <div class="resumen-label">Ton netas del mes</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="bas-pendientes" style="color:var(--naranja)">0</div>
+          <div class="resumen-label">Vehículos en planta</div>
+        </div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">Tiquetes de báscula</div>
+          <select class="mes-selector" id="bas-filtro" onchange="renderBascula()">
+            <option value="hoy">Hoy</option>
+            <option value="semana">Última semana</option>
+            <option value="mes">Este mes</option>
+            <option value="todos">Todos</option>
+          </select>
+        </div>
+        <div class="panel-body" id="bascula-lista"></div>
+      </div>
+    </div>
+
+    <!-- MAESTROS -->
+    <div class="page" id="page-maestros">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Configuración</div>
+          <div class="page-sub">Datos maestros que alimentan todos los módulos y formularios</div>
+        </div>
+        <div style="display:flex; gap:10px">
+          <button class="btn-cancel" style="margin-top:0" onclick="abrirMasivaMaestro()">📥 Carga masiva</button>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalMaestro()">+ Nuevo registro</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="maestros-tabs"></div>
+      <div class="panel-full">
+        <div class="panel-body" id="maestros-lista"></div>
+      </div>
+    </div>
+
+    <!-- PRESUPUESTO -->
+    <div class="page" id="page-presupuesto">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Presupuesto de actividades</div>
+          <div class="page-sub">Presupuestado vs. ejecutado — cruce automático con labores registradas</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center">
+          <select class="mes-selector" id="ppto-mes" onchange="renderPresupuesto()"></select>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalPpto()">+ Partida</button>
+        </div>
+      </div>
+
+      <div class="lotes-resumen">
+        <div class="resumen-chip">
+          <div class="resumen-val" id="ppto-total">$0</div>
+          <div class="resumen-label">Presupuestado</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="ppto-ejecutado" style="color:var(--dorado-claro)">$0</div>
+          <div class="resumen-label">Ejecutado</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="ppto-disponible">$0</div>
+          <div class="resumen-label">Disponible</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="ppto-pct" style="color:var(--naranja)">0%</div>
+          <div class="resumen-label">Ejecución</div>
+        </div>
+      </div>
+
+      <div id="ppto-lista"></div>
+    </div>
+
+    <!-- PÁGINAS DE ACTIVIDAD (generadas dinámicamente) -->
+    <div id="paginas-actividad"></div>
+
+    <!-- COSECHA -->
+    <div class="page" id="page-cosecha">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Cosecha RFF</div>
+          <div class="page-sub" id="cosecha-sub">Control de producción y trazabilidad</div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn-cancel" style="margin-top:0" onclick="abrirMasivaLabores('cosecha')">📥 Masiva</button>
+          <button class="btn-cancel" style="margin-top:0; border-color:var(--dorado); color:var(--dorado-claro)" onclick="abrirModoNFC('cosecha')">📡 Modo NFC</button>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalLabor('Cosecha')">＋ Manual</button>
+        </div>
+      </div>
+
+      <div class="lotes-resumen">
+        <div class="resumen-chip">
+          <div class="resumen-val" id="cos-racimos">0</div>
+          <div class="resumen-label">Racimos este mes</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="cos-ton" style="color:var(--dorado-claro)">0</div>
+          <div class="resumen-label">Ton despachadas (báscula)</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="cos-peso-prom">0</div>
+          <div class="resumen-label">Kg/racimo promedio</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="cos-costo" style="color:var(--naranja)">$0</div>
+          <div class="resumen-label">Costo cosecha del mes</div>
+        </div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">🔭 Censo de producción — proyección de cosecha</div>
+          <div style="display:flex; gap:8px">
+            <button class="btn-cancel" style="padding:5px 12px; font-size:12px" onclick="abrirMasivaCenso()">📥 Masiva</button>
+            <button class="btn-primary" style="margin-top:0; padding:5px 14px; font-size:12px" onclick="abrirModalCenso()">＋ Registrar censo</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="lotes-resumen" style="margin-bottom:16px">
+            <div class="resumen-chip">
+              <div class="resumen-val" id="cen-maduros" style="color:var(--dorado-claro)">0</div>
+              <div class="resumen-label">Racimos maduros (cosechar ya)</div>
+            </div>
+            <div class="resumen-chip">
+              <div class="resumen-val" id="cen-pintones" style="color:var(--naranja)">0</div>
+              <div class="resumen-label">Pintones (2-4 semanas)</div>
+            </div>
+            <div class="resumen-chip">
+              <div class="resumen-val" id="cen-verdes">0</div>
+              <div class="resumen-label">Verdes (1-3 meses)</div>
+            </div>
+            <div class="resumen-chip">
+              <div class="resumen-val" id="cen-ton-proy" style="color:#74b3ce">0</div>
+              <div class="resumen-label">Ton proyectadas (maduros+pintones)</div>
+            </div>
+          </div>
+          <div id="censo-lista"></div>
+        </div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">Historial de cosecha</div>
+        </div>
+        <div class="panel-body" id="cosecha-lista"></div>
+      </div>
+    </div>
+
+    <!-- SANIDAD -->
+    <div class="page" id="page-sanidad">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Sanidad — Detecciones por palma</div>
+          <div class="page-sub" id="sanidad-sub">Cada caso fitosanitario con su palma, severidad y ciclo de tratamiento</div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn-cancel" style="margin-top:0" onclick="abrirMasivaDetecciones()">📥 Masiva</button>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalDeteccion()">＋ Nueva detección</button>
+        </div>
+      </div>
+
+      <div class="lotes-resumen">
+        <div class="resumen-chip">
+          <div class="resumen-val" id="det-activas" style="color:var(--rojo)">0</div>
+          <div class="resumen-label">Casos activos</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="det-tratamiento" style="color:var(--dorado-claro)">0</div>
+          <div class="resumen-label">En tratamiento</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="det-recuperadas">0</div>
+          <div class="resumen-label">Recuperadas</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="det-erradicadas" style="color:var(--texto-dim)">0</div>
+          <div class="resumen-label">Palmas erradicadas</div>
+        </div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">Registro de detecciones</div>
+          <select class="mes-selector" id="det-filtro" onchange="renderDetecciones()">
+            <option value="">Todas las enfermedades</option>
+          </select>
+        </div>
+        <div class="panel-body" id="detecciones-lista"></div>
+      </div>
+
+      <div class="panel-full">
+        <div class="panel-header">
+          <div class="panel-title">Labores de censo y sanidad (costos)</div>
+          <div style="display:flex; gap:8px">
+            <button class="btn-cancel" style="padding:5px 12px; font-size:12px" onclick="abrirModoNFC('sanidad')">📡 NFC censo</button>
+            <button class="btn-cancel" style="padding:5px 12px; font-size:12px" onclick="abrirModalLabor('Censo Enfermedades')">＋ Registrar censo</button>
+          </div>
+        </div>
+        <div class="panel-body" id="sanidad-lista"></div>
+      </div>
+    </div>
+
+    <!-- LOTES -->
+    <div class="page" id="page-lotes">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Lotes de Valparaíso</div>
+          <div class="page-sub" id="lotes-sub">Cargando...</div>
+        </div>
+        <div style="display:flex; gap:10px">
+          <button class="btn-cancel" style="margin-top:0" onclick="abrirModalMasiva()">📥 Carga masiva</button>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalLote()">+ Nuevo lote</button>
+        </div>
+      </div>
+
+      <div class="lotes-resumen">
+        <div class="resumen-chip">
+          <div class="resumen-val" id="res-lotes">0</div>
+          <div class="resumen-label">Lotes registrados</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="res-has">0</div>
+          <div class="resumen-label">Hectáreas totales</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="res-palmas">0</div>
+          <div class="resumen-label">Palmas estimadas</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="res-variedades">0</div>
+          <div class="resumen-label">Variedades</div>
+        </div>
+      </div>
+
+      <div class="lotes-cards" id="lotes-cards">
+        <div class="empty-lotes">
+          <div class="empty-lotes-icon">🏞️</div>
+          <div class="empty-lotes-text">No hay lotes registrados aún</div>
+          <div class="empty-lotes-sub">Crea tu primer lote para comenzar a organizar Valparaíso</div>
+          <button class="btn-primary" onclick="abrirModalLote()">+ Crear primer lote</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COROZ IA -->
+    <div class="page" id="page-coroz">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Coroz:IA</div>
+          <div class="page-sub">Asistente inteligente especializado en palma · Valparaíso</div>
+        </div>
+      </div>
+
+      <div class="coroz-container">
+        <div class="chat-box">
+          <div class="chat-header">
+            <div class="coroz-avatar">🌴</div>
+            <div>
+              <div class="coroz-name">Coroz:IA</div>
+              <div class="coroz-status">● En línea · Valparaíso</div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg msg-bot">
+              Hola Santiago. Soy Coroz:IA, tu asistente especializado en la gestión de Valparaíso. Puedo ayudarte a analizar labores, consultar el estado de tus lotes, interpretar datos de sanidad, y responder preguntas sobre el manejo técnico de la palma. ¿En qué te ayudo hoy?
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" type="text" placeholder="Pregunta sobre Valparaíso..." onkeydown="if(event.key==='Enter') sendMsg()">
+            <button class="btn-send" onclick="sendMsg()">→</button>
+          </div>
+        </div>
+
+        <div class="coroz-sidebar">
+          <div class="coroz-sidebar-title">Preguntas frecuentes</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Cuándo fue la última polinización en el lote 1?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Qué palmas tienen PC activo este mes?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Cuántos racimos se cosecharon esta semana?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Qué trabajador tiene más labores registradas?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Cuál es el estado fitosanitario general de la finca?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Qué lotes necesitan plateo urgente?</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">Explícame el ciclo de polinización asistida en palma</div>
+          <div class="sugerencia" onclick="setMsg(this.innerText)">¿Cómo identifico Pudrición del Cogollo en campo?</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODAL LOTE -->
+<div class="modal-overlay" id="modal-lote">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-lote-title">Nuevo lote</div>
+      <button class="modal-close" onclick="cerrarModalLote()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="lote-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Número de lote</label>
+          <input type="number" id="lote-numero" placeholder="Ej: 1" min="1">
+        </div>
+        <div class="field">
+          <label>Nombre (opcional)</label>
+          <input type="text" id="lote-nombre" placeholder="Ej: Lote Norte">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Hectáreas</label>
+          <input type="number" id="lote-has" placeholder="Ej: 120.5" step="0.1" min="0">
+        </div>
+        <div class="field">
+          <label>Palmas estimadas</label>
+          <input type="number" id="lote-palmas" placeholder="Ej: 14400" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Variedad</label>
+          <select id="lote-variedad">
+            <option value="">Seleccionar...</option>
+            <option value="Tenera OxG">Tenera OxG</option>
+            <option value="Híbrido OxG Corpoica">Híbrido OxG Corpoica</option>
+            <option value="Híbrido OxG ASD">Híbrido OxG ASD</option>
+            <option value="Híbrido OxG Cirad">Híbrido OxG Cirad</option>
+            <option value="Material propio">Material propio</option>
+            <option value="Mixta">Mixta / Varias</option>
+            <option value="Por definir">Por definir</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado actual</label>
+          <select id="lote-estado">
+            <option value="preparacion">En preparación</option>
+            <option value="establecimiento">Establecimiento</option>
+            <option value="produccion">En producción</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Fecha de siembra</label>
+          <input type="date" id="lote-fecha">
+        </div>
+        <div class="field">
+          <label>Densidad (palmas/ha)</label>
+          <input type="number" id="lote-densidad" placeholder="Ej: 128" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Número de líneas</label>
+          <input type="number" id="lote-lineas" placeholder="Ej: 85" min="0">
+        </div>
+        <div class="field">
+          <label>Palmas por línea (aprox.)</label>
+          <input type="number" id="lote-palmas-linea" placeholder="Ej: 180" min="0">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Observaciones</label>
+          <textarea id="lote-obs" placeholder="Condiciones del terreno, pendiente, drenaje, observaciones relevantes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalLote()">Cancelar</button>
+      <button class="btn-save" onclick="guardarLote()">Guardar lote</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LABOR -->
+<div class="modal-overlay" id="modal-labor">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar labor</div>
+      <button class="modal-close" onclick="cerrarModalLabor()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field">
+          <label>Actividad</label>
+          <select id="labor-actividad">
+            <option value="ANA 1">Polinización ANA 1</option>
+            <option value="ANA 2">Polinización ANA 2</option>
+            <option value="ANA 3">Polinización ANA 3</option>
+            <option value="Poda">Poda</option>
+            <option value="Plateo Químico">Plateo Químico</option>
+            <option value="Plateo Mecánico">Plateo Mecánico</option>
+            <option value="Cosecha">Cosecha RFF</option>
+            <option value="Censo Enfermedades">Censo Enfermedades</option>
+            <option value="Censo Plagas">Censo Plagas</option>
+            <option value="Sanidad">Sanidad</option>
+            <option value="Fertilización">Fertilización</option>
+            <option value="Mantenimiento">Mantenimiento general</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lote</label>
+          <select id="labor-lote"><option value="">Sin lote</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Línea o rango (ej: 24 o 20-35)</label>
+          <input type="text" id="labor-linea" placeholder="Ej: 20-35">
+        </div>
+        <div class="field">
+          <label>Palma o rango (ej: 15 o 1-180)</label>
+          <input type="text" id="labor-palma" placeholder="Ej: 1-180">
+        </div>
+      </div>
+      <div id="labor-rango-hint" style="font-size:12px; color:var(--texto-dim); min-height:14px"></div>
+      <div class="form-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="labor-fecha">
+        </div>
+        <div class="field">
+          <label>Cantidad (palmas / racimos / unidades)</label>
+          <input type="number" id="labor-cantidad" placeholder="Ej: 250" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Trabajador</label>
+          <input type="text" id="labor-trabajador" placeholder="Nombre del trabajador">
+        </div>
+        <div class="field">
+          <label>Costo total (COP)</label>
+          <input type="number" id="labor-costo" placeholder="Se calcula con la tarifa" min="0">
+        </div>
+      </div>
+      <div id="labor-tarifa-hint" style="font-size:12px; color:var(--verde-claro); min-height:16px"></div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Observaciones</label>
+          <textarea id="labor-obs" placeholder="Detalles de la labor..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalLabor()">Cancelar</button>
+      <button class="btn-save" onclick="guardarLabor()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRESUPUESTO -->
+<div class="modal-overlay" id="modal-ppto">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva partida presupuestal</div>
+      <button class="modal-close" onclick="cerrarModalPpto()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ppto-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Actividad</label>
+          <select id="ppto-actividad">
+            <option value="Polinización">Polinización (ANA 1-3)</option>
+            <option value="Cosecha">Cosecha RFF</option>
+            <option value="Mantenimiento">Mantenimiento (poda, plateo)</option>
+            <option value="Sanidad">Sanidad</option>
+            <option value="Censo">Censo (enfermedades y plagas)</option>
+            <option value="Fertilización">Fertilización</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Mes</label>
+          <input type="month" id="ppto-mes-input">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Presupuesto (COP)</label>
+          <input type="number" id="ppto-valor" placeholder="Ej: 5000000" min="0">
+        </div>
+        <div class="field">
+          <label>Meta de actividades (unidades)</label>
+          <input type="number" id="ppto-meta" placeholder="Ej: 2000 palmas / racimos" min="0">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Notas</label>
+          <textarea id="ppto-notas" placeholder="Detalle de la partida..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalPpto()">Cancelar</button>
+      <button class="btn-save" onclick="guardarPpto()">Guardar partida</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PESAJE -->
+<div class="modal-overlay" id="modal-pesaje">
+  <div class="modal" style="width: 560px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-pesaje-title">Nuevo pesaje — Entrada</div>
+      <button class="modal-close" onclick="cerrarModalPesaje()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pesaje-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Placa del vehículo</label>
+          <input type="text" id="pesaje-placa" placeholder="Ej: ABC123" style="text-transform:uppercase" maxlength="7">
+        </div>
+        <div class="field">
+          <label>Conductor</label>
+          <input type="text" id="pesaje-conductor" placeholder="Nombre del conductor">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Lote(s) de origen</label>
+          <select id="pesaje-lote"><option value="">Sin especificar</option></select>
+        </div>
+        <div class="field">
+          <label>Destino</label>
+          <input type="text" id="pesaje-destino" placeholder="Ej: Extractora del Llano">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Peso bruto (kg) — entrada</label>
+          <input type="number" id="pesaje-bruto" placeholder="Ej: 18500" min="0" oninput="calcNeto()">
+        </div>
+        <div class="field">
+          <label>Tara (kg) — salida vacío</label>
+          <input type="number" id="pesaje-tara" placeholder="Dejar vacío si aún no sale" min="0" oninput="calcNeto()">
+        </div>
+      </div>
+      <div id="neto-display" style="display:none; background:rgba(82,183,136,0.08); border:1px solid rgba(82,183,136,0.3); border-radius:10px; padding:14px 18px; text-align:center">
+        <div style="font-size:11px; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.8px">Peso neto RFF</div>
+        <div id="neto-valor" style="font-family:'Space Grotesk',sans-serif; font-size:30px; font-weight:700; color:var(--verde-claro)">0 kg</div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>N° racimos (opcional)</label>
+          <input type="number" id="pesaje-racimos" placeholder="Ej: 850" min="0">
+        </div>
+        <div class="field">
+          <label>Observaciones</label>
+          <input type="text" id="pesaje-obs" placeholder="Fruta verde, impurezas, etc.">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalPesaje()">Cancelar</button>
+      <button class="btn-save" onclick="guardarPesaje()">Guardar tiquete</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MAESTRO (genérico) -->
+<div class="modal-overlay" id="modal-maestro">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-maestro-title">Nuevo registro</div>
+      <button class="modal-close" onclick="cerrarModalMaestro()">×</button>
+    </div>
+    <div class="modal-body" id="modal-maestro-body"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalMaestro()">Cancelar</button>
+      <button class="btn-save" onclick="guardarMaestro()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MASIVA MAESTRO (genérico) -->
+<div class="modal-overlay" id="modal-masiva-maestro">
+  <div class="modal" style="width: 640px">
+    <div class="modal-header">
+      <div class="modal-title" id="masiva-maestro-title">Carga masiva</div>
+      <button class="modal-close" onclick="cerrarMasivaMaestro()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; color:var(--texto-suave); line-height:1.6" id="masiva-maestro-help"></div>
+      <button class="btn-cancel" style="font-size:12.5px; align-self:flex-start" onclick="usarEjemploMaestro()">📋 Usar ejemplo aquí mismo</button>
+      <div class="field">
+        <label>Datos (una fila por registro, columnas con tabulación o punto y coma)</label>
+        <textarea id="masiva-maestro-data" style="min-height:160px; font-family:monospace; font-size:12.5px"></textarea>
+      </div>
+      <div id="masiva-maestro-preview" style="display:none; font-size:12.5px; color:var(--verde-claro); background:rgba(82,183,136,0.08); border:1px solid rgba(82,183,136,0.25); border-radius:8px; padding:10px 14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarMasivaMaestro()">Cancelar</button>
+      <button class="btn-cancel" onclick="previewMasivaMaestro()">👁 Previsualizar</button>
+      <button class="btn-save" onclick="cargarMasivaMaestro()">Cargar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORM BUILDER -->
+<div class="modal-overlay" id="modal-fb">
+  <div class="modal" style="width: 680px; max-height: 90vh; display:flex; flex-direction:column">
+    <div class="modal-header">
+      <div class="modal-title">Constructor de formularios</div>
+      <button class="modal-close" onclick="cerrarFormBuilder()">×</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto">
+      <input type="hidden" id="fb-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Nombre del formulario</label>
+          <input type="text" id="fb-nombre" placeholder="Ej: Inspección de drenajes">
+        </div>
+        <div class="field">
+          <label>Ícono (emoji)</label>
+          <input type="text" id="fb-icono" placeholder="Ej: 💧" maxlength="4">
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción</label>
+        <input type="text" id="fb-desc" placeholder="Para qué sirve este formulario">
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px">
+        <label style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.5px">Campos del formulario</label>
+        <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="agregarCampoFB()">+ Agregar campo</button>
+      </div>
+      <div id="fb-campos"></div>
+      <div style="font-size:11.5px; color:var(--texto-dim); line-height:1.5">
+        💡 Los campos tipo <strong>Maestro</strong> se convierten en listas desplegables que jalan los datos actualizados de Trabajadores, Lotes, Labores, Vehículos o Insumos.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarFormBuilder()">Cancelar</button>
+      <button class="btn-save" onclick="guardarFormulario()">Guardar formulario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORM FILL -->
+<div class="modal-overlay" id="modal-fill">
+  <div class="modal" style="max-height:90vh; display:flex; flex-direction:column">
+    <div class="modal-header">
+      <div class="modal-title" id="fill-title">Diligenciar</div>
+      <button class="modal-close" onclick="cerrarFill()">×</button>
+    </div>
+    <div class="modal-body" id="fill-body" style="overflow-y:auto"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarFill()">Cancelar</button>
+      <button class="btn-save" onclick="guardarRespuesta()">Guardar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESPUESTAS -->
+<div class="modal-overlay" id="modal-resp">
+  <div class="modal" style="width:760px; max-height:90vh; display:flex; flex-direction:column">
+    <div class="modal-header">
+      <div class="modal-title" id="resp-title">Respuestas</div>
+      <button class="modal-close" onclick="document.getElementById('modal-resp').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body" id="resp-body" style="overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- MODAL MASIVA LABORES -->
+<div class="modal-overlay" id="modal-masiva-lab">
+  <div class="modal" style="width: 680px">
+    <div class="modal-header">
+      <div class="modal-title" id="masiva-lab-title">Carga masiva de labores</div>
+      <button class="modal-close" onclick="cerrarMasivaLabores()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; color:var(--texto-suave); line-height:1.6" id="masiva-lab-help"></div>
+      <div class="field">
+        <label>Datos (una fila por registro)</label>
+        <textarea id="masiva-lab-data" style="min-height:160px; font-family:monospace; font-size:12.5px"></textarea>
+      </div>
+      <div id="masiva-lab-preview" style="display:none; font-size:12.5px; color:var(--verde-claro); background:rgba(82,183,136,0.08); border:1px solid rgba(82,183,136,0.25); border-radius:8px; padding:10px 14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarMasivaLabores()">Cancelar</button>
+      <button class="btn-cancel" onclick="previewMasivaLabores()">👁 Previsualizar</button>
+      <button class="btn-save" onclick="cargarMasivaLabores()">Cargar labores</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODO NFC -->
+<div class="modal-overlay" id="modal-nfc">
+  <div class="modal" style="width: 560px; max-height:92vh; display:flex; flex-direction:column; border-color:var(--dorado)">
+    <div class="modal-header" style="background:linear-gradient(135deg, rgba(212,160,23,0.08), transparent)">
+      <div class="modal-title" id="nfc-title">📡 Modo NFC</div>
+      <button class="modal-close" onclick="cerrarModoNFC()">×</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto">
+      <div id="nfc-gps-status" style="font-size:12.5px; color:var(--verde-claro)"></div>
+      <div id="nfc-hw-status" style="font-size:12.5px; color:var(--texto-suave)"></div>
+
+      <div class="form-row" style="grid-template-columns: 1.4fr 1fr 0.8fr">
+        <div class="field">
+          <label>Trabajador</label>
+          <select id="nfc-trabajador"></select>
+        </div>
+        <div class="field">
+          <label>Lote</label>
+          <select id="nfc-lote"></select>
+        </div>
+        <div class="field">
+          <label>Línea</label>
+          <input type="number" id="nfc-linea" placeholder="Ln" min="1">
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px">
+        <input type="checkbox" id="nfc-auto-linea" style="width:auto">
+        <label for="nfc-auto-linea" style="font-size:12px; color:var(--texto-suave); cursor:pointer">Avanzar línea automáticamente tras cada registro</label>
+      </div>
+
+      <div>
+        <label style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.5px">Tarjeta / Actividad</label>
+        <div id="nfc-actividades" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px"></div>
+      </div>
+
+      <button onclick="registrarNFC()" style="background:linear-gradient(135deg, var(--dorado), var(--dorado-claro)); border:none; color:var(--verde-palma); padding:18px; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; font-family:'Space Grotesk',sans-serif; width:100%; transition:transform 0.1s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        📡 REGISTRAR PALMA
+      </button>
+
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <span style="font-size:12px; color:var(--texto-dim)">Registros en esta sesión</span>
+        <span id="nfc-contador" style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:var(--dorado-claro)">0</span>
+      </div>
+
+      <div id="nfc-log" style="max-height:160px; overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" onclick="cerrarModoNFC()">Terminar sesión</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETECCIÓN -->
+<div class="modal-overlay" id="modal-deteccion">
+  <div class="modal" style="width:580px; max-height:92vh; display:flex; flex-direction:column">
+    <div class="modal-header" style="background:linear-gradient(135deg, rgba(230,57,70,0.08), transparent)">
+      <div class="modal-title" id="modal-det-title">🦠 Nueva detección fitosanitaria</div>
+      <button class="modal-close" onclick="cerrarModalDeteccion()">×</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto">
+      <input type="hidden" id="det-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Enfermedad / Plaga *</label>
+          <select id="det-enfermedad"></select>
+        </div>
+        <div class="field">
+          <label>Severidad</label>
+          <select id="det-severidad">
+            <option>Leve</option>
+            <option selected>Moderada</option>
+            <option>Severa</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="grid-template-columns: 1fr 0.7fr 0.7fr">
+        <div class="field">
+          <label>Lote *</label>
+          <select id="det-lote"></select>
+        </div>
+        <div class="field">
+          <label>Línea *</label>
+          <input type="number" id="det-linea" placeholder="Ln" min="1">
+        </div>
+        <div class="field">
+          <label>Palma *</label>
+          <input type="number" id="det-palma" placeholder="P" min="1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Fecha de detección</label>
+          <input type="date" id="det-fecha">
+        </div>
+        <div class="field">
+          <label>Detectada por</label>
+          <select id="det-por"></select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Síntomas / Observaciones</label>
+          <textarea id="det-obs" placeholder="Síntomas observados, estado de la palma, hallazgos adicionales..."></textarea>
+        </div>
+      </div>
+
+      <!-- Sección de seguimiento (solo visible en edición) -->
+      <div id="det-seguimiento-section" style="display:none">
+        <div style="border-top: 1px solid var(--borde); margin: 4px 0 12px; padding-top:14px">
+          <div style="font-size:12px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px">Agregar nota de seguimiento</div>
+          <div class="form-row">
+            <div class="field">
+              <label>Nuevo estado</label>
+              <select id="det-nuevo-estado">
+                <option value="activo">🔴 Activo</option>
+                <option value="tratamiento">🟡 En tratamiento</option>
+                <option value="recuperada">🟢 Recuperada</option>
+                <option value="erradicada">⚫ Erradicada</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fecha seguimiento</label>
+              <input type="date" id="det-seg-fecha">
+            </div>
+          </div>
+          <div class="field">
+            <label>Nota del seguimiento</label>
+            <input type="text" id="det-seg-nota" placeholder="Tratamiento aplicado, evolución, producto usado...">
+          </div>
+        </div>
+        <div id="det-historial-render" style="font-size:12.5px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalDeteccion()">Cancelar</button>
+      <button class="btn-save" id="det-btn-save" onclick="guardarDeteccion()">Registrar detección</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MASIVA DETECCIONES -->
+<div class="modal-overlay" id="modal-masiva-det">
+  <div class="modal" style="width: 680px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Carga masiva de detecciones</div>
+      <button class="modal-close" onclick="document.getElementById('modal-masiva-det').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; color:var(--texto-suave); line-height:1.6">
+        Columnas: <span style="color:var(--verde-claro); font-family:monospace; font-size:12px">Enfermedad · Lote · Línea · Palma · Fecha · Severidad · Detectada por · Observación</span><br>
+        <span style="font-size:12px; color:var(--texto-dim)">Una fila = una palma detectada. Severidad: Leve / Moderada / Severa</span>
+      </div>
+      <div class="field">
+        <label>Datos</label>
+        <textarea id="masiva-det-data" style="min-height:150px; font-family:monospace; font-size:12.5px" placeholder="Pudrición del Cogollo (PC)	3	42	18	2026-07-01	Moderada	José Alirio Pérez	Hoja flecha doblada"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-masiva-det').classList.remove('open')">Cancelar</button>
+      <button class="btn-save" onclick="cargarMasivaDetecciones()">Cargar detecciones</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CENSO PRODUCCIÓN -->
+<div class="modal-overlay" id="modal-censo">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <div class="modal-title">🔭 Censo de producción</div>
+      <button class="modal-close" onclick="cerrarModalCenso()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr">
+        <div class="field">
+          <label>Lote *</label>
+          <select id="cen-lote"></select>
+        </div>
+        <div class="field">
+          <label>Línea o rango</label>
+          <input type="text" id="cen-linea" placeholder="Ej: 20-35">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="cen-fecha">
+        </div>
+      </div>
+      <div style="font-size:12px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:0.5px">Conteo de racimos por madurez</div>
+      <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr">
+        <div class="field">
+          <label style="color:var(--verde-claro)">🟢 Verdes</label>
+          <input type="number" id="cen-verdes-inp" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label style="color:var(--naranja)">🟠 Pintones</label>
+          <input type="number" id="cen-pintones-inp" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label style="color:var(--dorado-claro)">🟡 Maduros</label>
+          <input type="number" id="cen-maduros-inp" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Censado por</label>
+          <select id="cen-por"></select>
+        </div>
+        <div class="field">
+          <label>Observaciones</label>
+          <input type="text" id="cen-obs" placeholder="Opcional">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalCenso()">Cancelar</button>
+      <button class="btn-save" onclick="guardarCenso()">Registrar censo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MASIVA CENSO -->
+<div class="modal-overlay" id="modal-masiva-censo">
+  <div class="modal" style="width:660px">
+    <div class="modal-header">
+      <div class="modal-title">📥 Carga masiva — Censo de producción</div>
+      <button class="modal-close" onclick="document.getElementById('modal-masiva-censo').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; color:var(--texto-suave); line-height:1.6">
+        Columnas: <span style="color:var(--verde-claro); font-family:monospace; font-size:12px">Lote · Línea · Fecha · Verdes · Pintones · Maduros · Censado por · Observación</span><br>
+        <span style="font-size:12px; color:var(--texto-dim)">Línea acepta rangos (20-35)</span>
+      </div>
+      <div class="field">
+        <label>Datos</label>
+        <textarea id="masiva-censo-data" style="min-height:140px; font-family:monospace; font-size:12.5px" placeholder="1	10-20	2026-07-01	450	120	85	José Alirio Pérez	
+1	21-30	2026-07-01	380	95	72	José Alirio Pérez	"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-masiva-censo').classList.remove('open')">Cancelar</button>
+      <button class="btn-save" onclick="cargarMasivaCenso()">Cargar censos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CARGA MASIVA -->
+<div class="modal-overlay" id="modal-masiva">
+  <div class="modal" style="width: 640px">
+    <div class="modal-header">
+      <div class="modal-title">Carga masiva de lotes</div>
+      <button class="modal-close" onclick="cerrarModalMasiva()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; color:var(--texto-suave); line-height:1.6">
+        Pega los datos desde Excel o Google Sheets. Una fila por lote, columnas separadas por tabulación o punto y coma:<br>
+        <span style="color:var(--verde-claro); font-family:monospace; font-size:12px">
+        Número · Nombre · Hectáreas · Palmas · Variedad · Estado · Fecha siembra (AAAA-MM-DD) · Densidad
+        </span><br>
+        <span style="font-size:12px; color:var(--texto-dim)">Solo el número es obligatorio. Estado: preparacion / establecimiento / produccion</span>
+      </div>
+      <div style="display:flex; gap:10px">
+        <button class="btn-cancel" style="font-size:12.5px" onclick="verPlantilla()">📄 Ver plantilla para Excel</button>
+        <button class="btn-cancel" style="font-size:12.5px" onclick="copiarPlantilla()">📋 Usar ejemplo aquí mismo</button>
+      </div>
+      <div id="plantilla-box" style="display:none">
+        <div style="font-size:12px; color:var(--texto-suave); margin-bottom:8px">
+          Copia este contenido → pégalo en Excel o Google Sheets (celda A1) → se distribuye en columnas automáticamente → llena tus datos → copia las filas de vuelta aquí:
+        </div>
+        <textarea id="plantilla-content" readonly style="width:100%; min-height:130px; font-family:monospace; font-size:12px; background:var(--fondo-card2); border:1px solid var(--verde-claro); border-radius:8px; padding:10px; color:var(--verde-suave); resize:vertical" onclick="this.select()"></textarea>
+        <button class="btn-save" style="margin-top:8px; font-size:12px" onclick="copiarContenidoPlantilla()">📋 Copiar al portapapeles</button>
+        <span id="plantilla-copiado" style="display:none; font-size:12px; color:var(--verde-claro); margin-left:10px">✓ Copiado</span>
+      </div>
+      <div class="field">
+        <label>Datos de lotes</label>
+        <textarea id="masiva-data" style="min-height:180px; font-family:monospace; font-size:12.5px" placeholder="1	Lote Norte	120.5	14400	Tenera OxG	establecimiento	2025-03-15	128
+2	Lote Sur	95	11500	Híbrido OxG Corpoica	preparacion		121
+3		200	 	Mixta	preparacion"></textarea>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px">
+        <input type="checkbox" id="masiva-reemplazar" style="width:auto">
+        <label for="masiva-reemplazar" style="font-size:12.5px; color:var(--texto-suave); text-transform:none; letter-spacing:0; cursor:pointer">
+          Reemplazar lotes existentes con el mismo número
+        </label>
+      </div>
+      <div id="masiva-preview" style="display:none; font-size:12.5px; color:var(--verde-claro); background:rgba(82,183,136,0.08); border:1px solid rgba(82,183,136,0.25); border-radius:8px; padding:10px 14px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalMasiva()">Cancelar</button>
+      <button class="btn-cancel" onclick="previewMasiva()">👁 Previsualizar</button>
+      <button class="btn-save" onclick="cargarMasiva()">Cargar lotes</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
