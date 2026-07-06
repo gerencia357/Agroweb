@@ -4275,6 +4275,10 @@
   let nfcSesionId = null;
   let nfcSesionRegs = {};
   let nfcSesionSeq = 0;
+  // Lector físico: control de escaneo, anti doble-lectura y aborto al cerrar
+  let nfcScanActivo = false;
+  let nfcUltimaLectura = 0;
+  let nfcAbort = null;
 
   function abrirModoNFC(moduloKey) {
     nfcModulo = moduloKey;
@@ -4282,6 +4286,8 @@
     nfcSesionId = Date.now().toString();
     nfcSesionRegs = {};
     nfcSesionSeq = 0;
+    nfcScanActivo = false;
+    nfcUltimaLectura = 0;
     const m = modulosActividad[moduloKey] || { titulo: moduloKey, icono: '📡' };
     const acts = actividadesPorModulo[moduloKey] || [];
     nfcActividad = acts[0];
@@ -4324,15 +4330,20 @@
     // Lector NFC real (Android Chrome)
     const nfcHW = document.getElementById('nfc-hw-status');
     if ('NDEFReader' in window) {
-      nfcHW.innerHTML = '✅ Lector NFC disponible — <button class="btn-primary" style="margin:0; padding:4px 12px; font-size:12px" onclick="activarLectorNFC()">Activar lector</button>';
+      nfcHW.innerHTML = '✅ NFC disponible — ' +
+        '<button class="btn-primary" style="margin:0; padding:4px 12px; font-size:12px" onclick="activarLectorNFC()">📡 Activar lector</button> ' +
+        '<button class="btn-cancel" style="padding:4px 12px; font-size:12px; border-color:var(--dorado); color:var(--dorado-claro)" onclick="grabarTarjetaNFC()">📝 Grabar tarjeta</button>';
     } else {
-      nfcHW.textContent = 'ℹ️ NFC físico no disponible en este dispositivo (funciona en Android + Chrome). Usa el botón de registro simulado.';
+      nfcHW.innerHTML = 'ℹ️ Lectura NFC no disponible en este dispositivo (iPhone/Safari no la soportan; sí funciona en Android con Chrome). Usa el botón <strong>REGISTRAR PALMA</strong> para registro manual.';
     }
 
     document.getElementById('modal-nfc').classList.add('open');
   }
 
   function cerrarModoNFC() {
+    // Detener el lector físico para que no siga registrando con el modal cerrado
+    if (nfcAbort) { nfcAbort.abort(); nfcAbort = null; }
+    nfcScanActivo = false;
     document.getElementById('modal-nfc').classList.remove('open');
     refrescarModulosLabores();
   }
@@ -4343,25 +4354,55 @@
   }
 
   async function activarLectorNFC() {
+    if (nfcScanActivo) return; // ya está escaneando: no apilar listeners
+    const status = document.getElementById('nfc-hw-status');
     try {
       const reader = new NDEFReader();
-      await reader.scan();
-      document.getElementById('nfc-hw-status').textContent = '📡 Lector activo — acerca una tarjeta NFC';
+      nfcAbort = new AbortController();
+      await reader.scan({ signal: nfcAbort.signal });
+      nfcScanActivo = true;
+      status.textContent = '📡 Lector activo — acerca una tarjeta NFC';
+      reader.onreadingerror = () => {
+        status.textContent = '⚠ No se pudo leer la tarjeta, intenta de nuevo';
+      };
       reader.onreading = (event) => {
-        // Leer texto de la tarjeta: si coincide con una actividad, la selecciona; siempre registra
+        // Anti doble-lectura: un mismo acercamiento puede disparar varios eventos
+        const ahora = Date.now();
+        if (ahora - nfcUltimaLectura < 1500) return;
+        nfcUltimaLectura = ahora;
+        // Leer texto de la tarjeta: si coincide con una labor del módulo, la selecciona
         let textoTarjeta = '';
         for (const record of event.message.records) {
           if (record.recordType === 'text') {
-            textoTarjeta = new TextDecoder().decode(record.data);
+            textoTarjeta = new TextDecoder(record.encoding || 'utf-8').decode(record.data);
           }
         }
         const acts = actividadesPorModulo[nfcModulo] || [];
         const idx = acts.findIndex(a => a.toLowerCase() === textoTarjeta.toLowerCase().trim());
         if (idx >= 0) seleccionarActividadNFC(acts[idx], idx);
+        if (navigator.vibrate) navigator.vibrate(80); // confirmación háptica en campo
         registrarNFC(textoTarjeta ? `Tarjeta: ${textoTarjeta}` : 'Tarjeta NFC');
       };
     } catch (err) {
-      document.getElementById('nfc-hw-status').textContent = '⚠ No se pudo activar el lector: ' + err.message;
+      nfcScanActivo = false;
+      status.textContent = '⚠ No se pudo activar el lector: ' + err.message;
+    }
+  }
+
+  // Graba la LABOR seleccionada en una tarjeta física (NDEFReader.write).
+  // El lector la reconoce 1:1 y auto-selecciona la labor al acercarla en campo.
+  async function grabarTarjetaNFC() {
+    if (!('NDEFReader' in window)) { alert('Este dispositivo no puede grabar tarjetas NFC (solo Android con Chrome)'); return; }
+    if (!nfcActividad) { alert('Selecciona primero la labor que quieres grabar en la tarjeta'); return; }
+    const status = document.getElementById('nfc-hw-status');
+    try {
+      const writer = new NDEFReader();
+      status.innerHTML = '📝 Acerca una tarjeta en blanco para grabar "<strong>' + nfcActividad + '</strong>"...';
+      await writer.write({ records: [{ recordType: 'text', data: nfcActividad, lang: 'es' }] });
+      if (navigator.vibrate) navigator.vibrate(120);
+      status.innerHTML = '✅ Tarjeta grabada con "<strong>' + nfcActividad + '</strong>". Cambia de labor para grabar otra, o pulsa 📡 Activar lector.';
+    } catch (err) {
+      status.textContent = '⚠ No se pudo grabar la tarjeta: ' + err.message;
     }
   }
 
