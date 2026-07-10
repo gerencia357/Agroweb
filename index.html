@@ -3769,15 +3769,79 @@
     };
     const df = diasAtras => d(diasAtras).slice(0,10);
 
-    // LOTES
-    lotes = [
-      { id: 'dl1', numero: 1, nombre: 'La Esperanza', has: 285, palmas: 36480, variedad: 'Híbrido OxG Corpoica', estado: 'establecimiento', fecha: '2024-11-10', densidad: 128, lineas: 190, palmasLinea: 192, obs: 'Terreno plano, buen drenaje', creadoEn: d(90) },
-      { id: 'dl2', numero: 2, nombre: 'El Progreso', has: 310, palmas: 39680, variedad: 'Híbrido OxG Corpoica', estado: 'establecimiento', fecha: '2025-01-20', densidad: 128, lineas: 205, palmasLinea: 194, obs: '', creadoEn: d(90) },
-      { id: 'dl3', numero: 3, nombre: 'Los Corozos', has: 265, palmas: 33920, variedad: 'Tenera OxG', estado: 'establecimiento', fecha: '2025-03-05', densidad: 128, lineas: 176, palmasLinea: 193, obs: 'Sector con nivel freático alto en invierno', creadoEn: d(90) },
-      { id: 'dl4', numero: 4, nombre: 'La Palmita', has: 298, palmas: 38144, variedad: 'Híbrido OxG ASD', estado: 'preparacion', fecha: '', densidad: 128, lineas: 0, palmasLinea: 0, obs: 'Adecuación de drenajes en curso', creadoEn: d(90) },
-      { id: 'dl5', numero: 5, nombre: 'El Mirador', has: 340, palmas: 0, variedad: 'Por definir', estado: 'preparacion', fecha: '', densidad: 0, lineas: 0, palmasLinea: 0, obs: 'Pendiente análisis de suelos', creadoEn: d(90) },
-      { id: 'dl6', numero: 6, nombre: 'Sabana Alta', has: 596, palmas: 0, variedad: 'Por definir', estado: 'preparacion', fecha: '', densidad: 0, lineas: 0, palmasLinea: 0, obs: 'Fase de topografía', creadoEn: d(90) }
+    // LOTES REALES de Valparaíso (Etapa I + II) — de "Información predios.xlsx"
+    // Formato compacto: [predio, etapa, número, variedad, hectáreas, palmas]
+    const lotesReales = [
+      // Casanare · Etapa I
+      ['Casanare','I',29,'Themba',3.1,438],   ['Casanare','I',30,'#S',10.9,1562],
+      ['Casanare','I',31,'#S',17.9,2502],     ['Casanare','I',32,'#S',15.9,2276],
+      ['Casanare','I',34,'#S',20.9,2984],     ['Casanare','I',35,'#S',13.1,1870],
+      ['Casanare','I',36,'#S',25.6,3663],     ['Casanare','I',37,'Themba',23.6,3332],
+      // Muleto · Etapa I
+      ['Muleto','I',1,'#S',14.13,1878],       ['Muleto','I',2,'Themba',24.97,3089],
+      ['Muleto','I',3,'Themba',16.10,2169],   ['Muleto','I',4,'#S',23.01,2961],
+      ['Muleto','I',5,'Themba',18.35,2402],   ['Muleto','I',6,'#S',26.65,3476],
+      ['Muleto','I',7,'Themba',39.95,5313],   ['Muleto','I',8,'#S',26.40,3538],
+      ['Muleto','I',9,'Themba',29.58,3952],   ['Muleto','I',10,'Themba',32.27,3897],
+      ['Muleto','I',11,'#S',31.68,4491],      ['Muleto','I',12,'Themba',20.99,2746],
+      ['Muleto','I',13,'Themba',16.55,2173],  ['Muleto','I',14,'#S',21.02,2886],
+      ['Muleto','I',15,'#S',21.07,2907],      ['Muleto','I',16,'Themba',21.07,2875],
+      ['Muleto','I',17,'Themba',25.05,3316],  ['Muleto','I',18,'#S',31.84,4296],
+      ['Muleto','I',19,'Themba',10.05,1416],  ['Muleto','I',20,'#S',23.73,3262],
+      ['Muleto','I',21,'Themba',14.64,1981],  ['Muleto','I',22,'Themba',7.22,997],
+      ['Muleto','I',23,'#S',12.00,1374],
+      // Muleto · Etapa II
+      ['Muleto','II',38,'Themba',24.30,3366], ['Muleto','II',39,'#S',24.51,4162],
+      ['Muleto','II',40,'Deli x Lame',1.37,2141], ['Muleto','II',42,'#S',4.00,1440],
+      ['Muleto','II',43,'Deli x Lame',16.50,2312], ['Muleto','II',44,'#S',14.48,2230],
+      ['Muleto','II',45,'#PC',8.67,0],        ['Muleto','II',53,'Por definir',0.87,0],
+      ['Muleto','II',54,'#PC',4.42,0],        ['Muleto','II',55,'Themba',2.00,269],
+      ['Muleto','II',56,'Themba',11.56,1729], ['Muleto','II',57,'#S',6.52,2791],
+      ['Muleto','II',58,'#S',0.14,2970],
+      // Bramadora · Etapa I
+      ['Bramadora','I',10,'Themba',1,741],    ['Bramadora','I',23,'#S',0,49],
+      ['Bramadora','I',24,'Themba',8,979],    ['Bramadora','I',25,'#S',15,2051],
+      ['Bramadora','I',26,'Themba',20,2921],  ['Bramadora','I',27,'#S',14,1981],
+      ['Bramadora','I',28,'Themba',18,2475],  ['Bramadora','I',29,'Themba',28,3965],
+      ['Bramadora','I',32,'#S',9,1256],       ['Bramadora','I',33,'Themba',11,1508],
+      // Bramadora · Etapa II
+      ['Bramadora','II',39,'#S',4.39,628],    ['Bramadora','II',40,'Deli x Lame',13.89,1986],
+      ['Bramadora','II',41,'#S',8.9,1273],    ['Bramadora','II',42,'#S',6.23,891],
+      ['Bramadora','II',44,'#S',0.75,107],    ['Bramadora','II',45,'#PC',12.04,1722],
+      ['Bramadora','II',46,'Themba',21.3,3046], ['Bramadora','II',47,'#PC',23.9,3418],
+      ['Bramadora','II',48,'Themba',28.1,4018], ['Bramadora','II',49,'#PC',10.3,1473],
+      ['Bramadora','II',50,'Themba',24.3,3475], ['Bramadora','II',51,'#PC y Deli x Lame',16.1,2302],
+      ['Bramadora','II',52,'Deli x Lame',14.94,2136], ['Bramadora','II',53,'#PC',15.72,2248],
+      ['Bramadora','II',54,'#PC',7.68,1098],  ['Bramadora','II',56,'Themba',1,143],
+      ['Bramadora','II',57,'#S',14.98,2142],  ['Bramadora','II',58,'#S',21.51,3076],
+      ['Bramadora','II',59,'Deli x Lame',24.2,3461], ['Bramadora','II',60,'#S',16.7,2388],
+      ['Bramadora','II',61,'#PC',13.5,1931],  ['Bramadora','II',62,'Deli x Lame',25.8,3689],
+      ['Bramadora','II',63,'#PC',9.5,1359],   ['Bramadora','II',64,'#PC',21,3003],
+      ['Bramadora','II',65,'#PC',28.8,4118],  ['Bramadora','II',66,'#S',19.7,2817],
+      ['Bramadora','II',67,'#S',19.7,2817],   ['Bramadora','II',68,'#PC',30.91,4420],
+      ['Bramadora','II',69,'Themba',11.2,1602], ['Bramadora','II',70,'#PC',15.2,2174],
+      ['Bramadora','II',71,'Themba',12.4,1773], ['Bramadora','II',72,'#PC',9.6,1373],
+      ['Bramadora','II',73,'Deli x Lame',20.3,2903], ['Bramadora','II',74,'#S',13.4,1916]
     ];
+    lotes = lotesReales.map((r, i) => {
+      const [predio, etapa, numero, variedad, has, palmas] = r;
+      return {
+        id: 'rl_' + i,
+        numero,
+        nombre: predio,
+        has,
+        palmas,
+        variedad,
+        estado: (etapa === 'I' || palmas > 0) ? 'establecimiento' : 'preparacion',
+        fecha: '',
+        densidad: (has > 0 && palmas > 0) ? Math.round(palmas / has) : 0,
+        lineas: 0,
+        palmasLinea: 0,
+        obs: 'Predio ' + predio + ' · Etapa ' + etapa,
+        creadoEn: d(90)
+      };
+    });
+    lotes.sort((a, b) => a.numero - b.numero || a.nombre.localeCompare(b.nombre));
     saveLotes();
 
     // TRABAJADORES
