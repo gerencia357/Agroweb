@@ -5824,9 +5824,18 @@ El administrador es Santiago. Respondes en español, de forma concisa y técnica
   }
 
   // ── INICIALIZACIÓN FINAL ────────────────────────────────
-  // Cargar demo si no hay datos (primera vez) — al final porque ya existen todas las variables
+  // Versión del seed de datos. Al subirla, los navegadores que ya tienen
+  // datos de una versión anterior recargan automáticamente los datos reales.
+  const DATA_VERSION = '2026-07-10-etapa1-real';
+  const versionGuardada = localStorage.getItem('agroweb_data_version');
   if (!lotes.length && !labores.length && !pesajes.length) {
+    // Primera vez: cargar los datos
     cargarDemo();
+    localStorage.setItem('agroweb_data_version', DATA_VERSION);
+  } else if (versionGuardada !== DATA_VERSION) {
+    // Los datos guardados son de una versión anterior del seed → recargar los reales
+    cargarDemo();
+    localStorage.setItem('agroweb_data_version', DATA_VERSION);
   } else {
     actualizarDashboardLabores();
   }
