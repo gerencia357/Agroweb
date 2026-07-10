@@ -1253,6 +1253,9 @@
     <div class="nav-item" onclick="showPage('fertilizacion', this)" title="Fertilización">
       <span class="nav-icon">🌱</span> <span class="nav-label">Fertilización</span>
     </div>
+    <div class="nav-item" onclick="showPage('preparacion', this)" title="Preparación de terrenos">
+      <span class="nav-icon">🚜</span> <span class="nav-label">Preparación</span>
+    </div>
     <div class="nav-item" onclick="showPage('sanidad', this)" title="Sanidad">
       <span class="nav-icon">🔬</span> <span class="nav-label">Sanidad</span>
     </div>
@@ -2918,11 +2921,29 @@
     return u || '—';
   }
 
+  let laboresVista = 'lote';
+  function setLaboresVista(v) { laboresVista = v; renderLabores(); }
+
+  function filaLaborHTML(l) {
+    return `<tr style="${(l.estado||'pendiente')==='rechazada' ? 'opacity:0.45' : ''}">
+      <td>${new Date(l.fecha+'T12:00:00').toLocaleDateString('es-CO',{month:'short',day:'numeric'})}</td>
+      <td style="color:var(--verde-claro); font-weight:500">${catIcono[actividadCategoria[l.actividad]]||'📌'} ${l.actividad}</td>
+      <td style="font-family:monospace; font-size:12px">${fmtUbicacion(l)}</td>
+      <td>${l.cantidad ? l.cantidad.toLocaleString('es-CO') : '—'}</td>
+      <td>${l.trabajador || '—'}</td>
+      <td>${l.costo ? fmtCOP(l.costo) : '—'}</td>
+      <td style="white-space:nowrap">${badgeEstado(l)}</td>
+      <td><button class="btn-icon" onclick="eliminarLabor('${l.id}')" style="width:24px;height:24px;font-size:11px">🗑️</button></td>
+    </tr>`;
+  }
+
   function renderLabores() {
     const container = document.getElementById('labores-lista');
     const pendientes = labores.filter(l => (l.estado||'pendiente') === 'pendiente').length;
+    const btn = (v, txt) => `<button class="btn-cancel" style="padding:2px 10px; font-size:11px; ${laboresVista===v?'border-color:var(--verde-claro); color:var(--verde-claro)':''}" onclick="setLaboresVista('${v}')">${txt}</button>`;
+    const toggle = `<span style="display:inline-flex; gap:4px; margin-left:10px">${btn('lote','Por lote')}${btn('cronologico','Cronológico')}</span>`;
     document.getElementById('labores-sub').innerHTML = labores.length
-      ? `${labores.length} labores registradas${pendientes ? ` · <span style="color:var(--dorado-claro)">${pendientes} pendientes de aprobación</span> <button class="btn-cancel" style="padding:2px 10px; font-size:11px" onclick="aprobarTodasPendientes()">✓ Aprobar todas</button>` : ''}`
+      ? `${labores.length} labores registradas${pendientes ? ` · <span style="color:var(--dorado-claro)">${pendientes} pendientes de aprobación</span> <button class="btn-cancel" style="padding:2px 10px; font-size:11px" onclick="aprobarTodasPendientes()">✓ Aprobar todas</button>` : ''}${toggle}`
       : 'Vista consolidada de todas las actividades registradas';
 
     if (!labores.length) {
@@ -2934,20 +2955,40 @@
       return;
     }
 
-    container.innerHTML = `<table class="lotes-table">
-      <thead><tr><th>Fecha</th><th>Actividad</th><th>Ubicación</th><th>Cantidad</th><th>Trabajador</th><th>Costo</th><th>Estado</th><th></th></tr></thead>
-      <tbody>${labores.map(l => `
-        <tr style="${(l.estado||'pendiente')==='rechazada' ? 'opacity:0.45' : ''}">
-          <td>${new Date(l.fecha+'T12:00:00').toLocaleDateString('es-CO',{month:'short',day:'numeric'})}</td>
-          <td style="color:var(--verde-claro); font-weight:500">${catIcono[actividadCategoria[l.actividad]]||'📌'} ${l.actividad}</td>
-          <td style="font-family:monospace; font-size:12px">${fmtUbicacion(l)}</td>
-          <td>${l.cantidad ? l.cantidad.toLocaleString('es-CO') : '—'}</td>
-          <td>${l.trabajador || '—'}</td>
-          <td>${l.costo ? fmtCOP(l.costo) : '—'}</td>
-          <td style="white-space:nowrap">${badgeEstado(l)}</td>
-          <td><button class="btn-icon" onclick="eliminarLabor('${l.id}')" style="width:24px;height:24px;font-size:11px">🗑️</button></td>
-        </tr>`).join('')}
-      </tbody></table>`;
+    const thead = `<thead><tr><th>Fecha</th><th>Actividad</th><th>Ubicación</th><th>Cantidad</th><th>Trabajador</th><th>Costo</th><th>Estado</th><th></th></tr></thead>`;
+
+    if (laboresVista === 'cronologico') {
+      const ord = [...labores].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+      container.innerHTML = `<table class="lotes-table">${thead}<tbody>${ord.map(filaLaborHTML).join('')}</tbody></table>`;
+      return;
+    }
+
+    // ── Agrupado por lote ──
+    const grupos = {};
+    labores.forEach(l => {
+      const k = (l.lote==null || l.lote==='' || l.lote==='-') ? '—' : String(l.lote);
+      (grupos[k] = grupos[k] || []).push(l);
+    });
+    const claves = Object.keys(grupos).sort((x,y) => {
+      const nx=parseInt(x,10), ny=parseInt(y,10);
+      if (isNaN(nx) && isNaN(ny)) return x.localeCompare(y);
+      if (isNaN(nx)) return 1;
+      if (isNaN(ny)) return -1;
+      return nx-ny;
+    });
+    container.innerHTML = claves.map(k => {
+      const items = grupos[k].slice().sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+      const loteObj = lotes.find(L => String(L.numero)===k && L.etapa==='I') || lotes.find(L => String(L.numero)===k);
+      const meta = loteObj ? `${loteObj.nombre} · ${loteObj.variedad||''} · ${(loteObj.palmas||0).toLocaleString('es-CO')} palmas` : (k==='—' ? 'General / infraestructura' : '');
+      const costo = items.reduce((s,l) => s + (l.costo||0), 0);
+      return `<details open style="margin-bottom:8px; border:1px solid rgba(255,255,255,0.12); border-radius:8px; overflow:hidden">
+        <summary style="cursor:pointer; padding:10px 14px; background:rgba(255,255,255,0.04); font-weight:600; color:var(--verde-claro)">
+          ${k==='—' ? '🗂️ General' : '📍 Lote '+k} <span style="color:var(--texto-dim); font-weight:400; font-size:12px">— ${meta}</span>
+          <span style="float:right; color:var(--texto-dim); font-weight:400; font-size:12px">${items.length} labores · ${fmtCOP(costo)}</span>
+        </summary>
+        <table class="lotes-table" style="margin:0">${thead}<tbody>${items.map(filaLaborHTML).join('')}</tbody></table>
+      </details>`;
+    }).join('');
   }
 
   // ── PRESUPUESTO ─────────────────────────────────────────
@@ -4563,6 +4604,27 @@
         { label: 'Lotes cubiertos', valor: [...new Set(delMes.map(l=>l.lote).filter(Boolean))].length, color: '#74b3ce' },
         { label: 'Costo del mes', valor: null, esCosto: true, color: 'var(--naranja)' }
       ]
+    },
+    preparacion: {
+      titulo: 'Preparación de terrenos', icono: '🚜', categoria: 'Otro',
+      sub: 'Siembra, rastra, rotospeed, drenajes, coberturas y vías',
+      historico: true,
+      botones: [
+        { label: '+ Siembra', actividad: 'Siembra', primario: false },
+        { label: '+ Rastra', actividad: 'Rastra', primario: false },
+        { label: '+ Drenaje', actividad: 'Drenajes Terciarios', primario: true }
+      ],
+      kpis: (regs) => {
+        const haRastra = regs.filter(l => l.actividad === 'Rastra' || l.actividad === 'Rotospeed').reduce((s,l)=>s+(l.cantidad||0),0);
+        const mlDren = regs.filter(l => (l.actividad||'').startsWith('Drenajes')).reduce((s,l)=>s+(l.cantidad||0),0);
+        const haCob = regs.filter(l => (l.actividad||'').startsWith('Cobertura')).reduce((s,l)=>s+(l.cantidad||0),0);
+        return [
+          { label: 'Ha preparadas (rastra/rotospeed)', valor: Math.round(haRastra).toLocaleString('es-CO'), color: '' },
+          { label: 'ML drenajes', valor: Math.round(mlDren).toLocaleString('es-CO'), color: 'var(--dorado-claro)' },
+          { label: 'Ha coberturas', valor: Math.round(haCob).toLocaleString('es-CO'), color: '#74b3ce' },
+          { label: 'Registros', valor: regs.length, color: 'var(--naranja)' }
+        ];
+      }
     }
   };
 
@@ -4595,10 +4657,12 @@
     const registros = labores.filter(l => actividadCategoria[l.actividad] === m.categoria);
     const aprobadasCat = laboresAprobadas().filter(l => actividadCategoria[l.actividad] === m.categoria);
     const delMes = aprobadasCat.filter(l => l.fecha && l.fecha.slice(0,7) === mes);
-    const costoMes = delMes.reduce((s,l) => s + (l.costo||0), 0);
+    // Los módulos históricos (ej. Preparación) resumen TODO lo ejecutado, no solo el mes
+    const baseKpi = m.historico ? aprobadasCat : delMes;
+    const costoMes = baseKpi.reduce((s,l) => s + (l.costo||0), 0);
 
     // KPIs
-    document.getElementById(key + '-kpis').innerHTML = m.kpis(delMes).map(k => `
+    document.getElementById(key + '-kpis').innerHTML = m.kpis(baseKpi).map(k => `
       <div class="resumen-chip">
         <div class="resumen-val" ${k.color ? `style="color:${k.color}"` : ''}>${k.esCosto ? fmtCOP(costoMes) : k.valor}</div>
         <div class="resumen-label">${k.label}</div>
@@ -4625,6 +4689,7 @@
     polinizacion: ['Polinización ANA 1', 'Polinización ANA 2', 'Polinización ANA 3'],
     mantenimiento: ['Poda', 'Plateo Químico', 'Plateo Mecánico'],
     fertilizacion: ['Fertilización'],
+    preparacion: ['Siembra', 'Rastra', 'Rotospeed', 'Drenajes Terciarios', 'Drenajes Primarios', 'Drenajes Secundarios', 'Vías', 'Cobertura Kudzu', 'Cobertura Mucuna'],
     cosecha: ['Cosecha'],
     sanidad: ['Censo Enfermedades', 'Censo Plagas', 'Sanidad']
   };
