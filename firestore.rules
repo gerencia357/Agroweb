@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// ===============================================================
+//  AgroWeb · Reglas de seguridad de Cloud Firestore (PROTOTIPO)
+// ===============================================================
+//
+//  Modelo de datos asumido (aún no en uso: los datos viven en
+//  localStorage por ahora — integración "solo autenticación + base").
+//
+//  Colección: usuarios/{uid}/...   → datos privados de cada usuario.
+//    Solo el propio usuario autenticado puede leer/escribir.
+//
+//  Colección: finca/...            → datos compartidos de la finca
+//    (lotes, labores, pesajes, etc. cuando se migren).
+//    Cualquier usuario AUTENTICADO puede leer/escribir (prototipo).
+//
+//  Todo lo demás queda DENEGADO por defecto.
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Datos privados por usuario.
+    match /usuarios/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Datos compartidos de la finca (requiere sesión iniciada).
+    match /finca/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Denegar todo lo no contemplado explícitamente arriba.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

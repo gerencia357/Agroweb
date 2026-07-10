@@ -1341,6 +1341,47 @@
   </div>
 </div>
 
+<!-- ── FIREBASE AUTH · Email/Contraseña ─────────────────────────── -->
+<div id="fb-auth-overlay" style="display:flex; position:fixed; inset:0; background:var(--fondo); z-index:600; align-items:center; justify-content:center">
+  <div style="width:400px; max-width:92vw">
+    <div style="text-align:center; margin-bottom:28px">
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:32px; font-weight:700">Agro<span style="color:var(--verde-claro)">Web</span></div>
+      <div style="font-size:12px; color:var(--texto-suave); letter-spacing:1px; text-transform:uppercase; margin-top:4px">🌴 Valparaíso · Maní, Casanare</div>
+    </div>
+
+    <!-- Estado de carga mientras Firebase resuelve la sesión -->
+    <div id="fb-auth-loading" style="text-align:center; color:var(--texto-suave); font-size:13px; padding:24px">Conectando con Firebase…</div>
+
+    <!-- Formulario de inicio de sesión / registro -->
+    <form id="fb-auth-form" autocomplete="on" style="display:none; background:var(--fondo-card); border:1px solid var(--borde); border-radius:16px; padding:28px" onsubmit="return false">
+      <div id="fb-auth-title" style="font-size:16px; font-weight:600; margin-bottom:18px; text-align:center">Iniciar sesión</div>
+      <div class="field" style="margin-bottom:16px">
+        <label>Correo electrónico</label>
+        <input type="email" id="fb-email" autocomplete="email" placeholder="tucorreo@ejemplo.com" style="width:100%">
+      </div>
+      <div class="field" style="margin-bottom:16px">
+        <label>Contraseña</label>
+        <input type="password" id="fb-password" autocomplete="current-password" placeholder="••••••••" style="width:100%">
+      </div>
+      <div id="fb-auth-msg" style="display:none; font-size:12.5px; margin-bottom:12px; text-align:center"></div>
+      <button type="submit" id="fb-auth-submit" class="btn-save" style="width:100%; padding:12px; font-size:14px">Ingresar</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:12px">
+        <span id="fb-auth-toggle" style="color:var(--verde-claro); cursor:pointer">Crear cuenta</span>
+        <span id="fb-auth-reset" style="color:var(--texto-suave); cursor:pointer">¿Olvidaste tu contraseña?</span>
+      </div>
+    </form>
+
+    <!-- Aviso cuando falta la configuración de Firebase -->
+    <div id="fb-auth-config-warning" style="display:none; background:var(--fondo-card); border:1px solid var(--rojo); border-radius:12px; padding:18px; font-size:12.5px; color:var(--texto-suave); line-height:1.65">
+      <b style="color:var(--rojo); font-size:13px">⚠️ Firebase sin configurar</b><br>
+      Falta pegar la configuración de tu app web (<code>firebaseConfig</code>) en <code>index.html</code>.
+      Ábrela en la Consola de Firebase → <i>Configuración del proyecto</i> → <i>Tus apps</i> → <i>SDK setup and configuration</i>,
+      y reemplaza los valores marcados como <code>REEMPLAZAR_…</code> dentro del bloque
+      <code>firebaseConfig</code> al final del archivo.
+    </div>
+  </div>
+</div>
+
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
@@ -4836,8 +4877,31 @@
   function cerrarSesion() {
     sesion = null;
     localStorage.removeItem('agroweb_sesion');
-    mostrarLogin();
+    // Firebase Auth es la puerta de entrada: cerrar sesión allí muestra el login.
+    if (window.firebaseSignOut) { window.firebaseSignOut(); }
+    else { mostrarLogin(); }
   }
+
+  // ── PUENTE CON FIREBASE AUTH (Email/Contraseña) ────────────
+  // El correo autenticado en Firebase se mapea a un usuario/rol local.
+  // Define el campo "email" en un usuario del maestro para que herede su rol.
+  // Sin coincidencia entra como Administrador (evita bloqueos en el primer acceso).
+  window.aplicarSesionDesdeEmail = function(email) {
+    const usuarios = getMaestro('usuarios');
+    const u = usuarios.find(x => (x.email || '').toLowerCase() === (email || '').toLowerCase() && x.activo !== 'Inactivo');
+    if (u) {
+      sesion = { nombre: u.nombre, rol: u.rol, trabajador: u.trabajador || '', email };
+    } else {
+      sesion = { nombre: (email || 'Usuario').split('@')[0], rol: 'Administrador', email };
+    }
+    localStorage.setItem('agroweb_sesion', JSON.stringify(sesion));
+    document.getElementById('login-overlay').style.display = 'none';
+    aplicarPermisos();
+  };
+  window.limpiarSesionLocal = function() {
+    sesion = null;
+    localStorage.removeItem('agroweb_sesion');
+  };
 
   function aplicarPermisos() {
     if (!sesion) return;
@@ -5390,11 +5454,138 @@ El administrador es Santiago. Respondes en español, de forma concisa y técnica
   renderCensoProduccion();
   renderTodosModulosActividad();
 
-  // Sesión: login si no hay, permisos si hay
+  // Sesión: Firebase Auth (Email/Contraseña) controla el acceso.
+  // Si hay una sesión local previa, aplicar permisos mientras el overlay de
+  // Firebase (#fb-auth-overlay) confirma el estado de autenticación por encima.
   if (sesion) {
     aplicarPermisos();
+  }
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     FIREBASE · Autenticación (Email/Contraseña) + Firestore
+     Proyecto: 636480168122
+     SDK modular vía CDN (no requiere build). Módulo ES: se ejecuta
+     después del script clásico, por lo que window.* ya existe.
+     ══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    sendPasswordResetEmail, signOut
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // ─── CONFIGURACIÓN DE TU APP WEB ──────────────────────────────
+  //  Reemplaza los valores REEMPLAZAR_… con los de tu app web
+  //  registrada en el proyecto 636480168122.
+  //  Consola de Firebase → Configuración del proyecto → Tus apps →
+  //  "SDK setup and configuration" → Config.
+  const firebaseConfig = {
+    apiKey:            "REEMPLAZAR_API_KEY",
+    authDomain:        "REEMPLAZAR_PROJECT_ID.firebaseapp.com",
+    projectId:         "REEMPLAZAR_PROJECT_ID",
+    storageBucket:     "REEMPLAZAR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "636480168122",
+    appId:             "REEMPLAZAR_APP_ID"
+  };
+  // ──────────────────────────────────────────────────────────────
+
+  const $ = (id) => document.getElementById(id);
+  const configOk = !String(firebaseConfig.apiKey).startsWith("REEMPLAZAR");
+
+  if (!configOk) {
+    // Sin configuración: mostrar aviso y no intentar conectar.
+    $('fb-auth-loading').style.display = 'none';
+    $('fb-auth-config-warning').style.display = 'block';
   } else {
-    mostrarLogin();
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    // Exponer para el resto de la app (Firestore se usará más adelante).
+    window.firebaseApp = app; window.firebaseAuth = auth; window.db = db;
+
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+    // Permite a la app clásica cerrar sesión en Firebase.
+    window.firebaseSignOut = () => signOut(auth);
+
+    let modo = 'login'; // 'login' | 'signup'
+
+    const mostrarMsg = (texto, tipo) => {
+      const el = $('fb-auth-msg');
+      el.style.display = 'block';
+      el.textContent = texto;
+      el.style.color = tipo === 'error' ? 'var(--rojo)'
+        : (tipo === 'ok' ? 'var(--verde-claro)' : 'var(--texto-suave)');
+    };
+    const limpiarMsg = () => { $('fb-auth-msg').style.display = 'none'; };
+
+    const traducirError = (code) => ({
+      'auth/invalid-email':          'Correo electrónico inválido.',
+      'auth/user-disabled':          'Este usuario está deshabilitado.',
+      'auth/user-not-found':         'No existe una cuenta con ese correo.',
+      'auth/wrong-password':         'Contraseña incorrecta.',
+      'auth/invalid-credential':     'Correo o contraseña incorrectos.',
+      'auth/email-already-in-use':   'Ya existe una cuenta con ese correo.',
+      'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
+      'auth/too-many-requests':      'Demasiados intentos fallidos. Intenta más tarde.',
+      'auth/network-request-failed': 'Error de red. Verifica tu conexión.',
+      'auth/operation-not-allowed':  'El proveedor Email/Contraseña no está habilitado en Firebase.'
+    }[code] || ('No se pudo completar la operación (' + code + ').'));
+
+    // Alternar entre iniciar sesión y crear cuenta
+    $('fb-auth-toggle').addEventListener('click', () => {
+      modo = modo === 'login' ? 'signup' : 'login';
+      $('fb-auth-title').textContent  = modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta';
+      $('fb-auth-submit').textContent = modo === 'login' ? 'Ingresar' : 'Registrarme';
+      $('fb-auth-toggle').textContent = modo === 'login' ? 'Crear cuenta' : 'Ya tengo cuenta';
+      $('fb-password').setAttribute('autocomplete', modo === 'login' ? 'current-password' : 'new-password');
+      limpiarMsg();
+    });
+
+    // Enviar formulario (iniciar sesión o registrarse)
+    $('fb-auth-form').addEventListener('submit', async () => {
+      const email = $('fb-email').value.trim();
+      const pass  = $('fb-password').value;
+      if (!email || !pass) { mostrarMsg('Ingresa tu correo y contraseña.', 'error'); return; }
+      $('fb-auth-submit').disabled = true;
+      try {
+        if (modo === 'login') await signInWithEmailAndPassword(auth, email, pass);
+        else                  await createUserWithEmailAndPassword(auth, email, pass);
+        limpiarMsg();
+      } catch (e) {
+        mostrarMsg(traducirError(e.code), 'error');
+      } finally {
+        $('fb-auth-submit').disabled = false;
+      }
+    });
+
+    // Restablecer contraseña
+    $('fb-auth-reset').addEventListener('click', async () => {
+      const email = $('fb-email').value.trim();
+      if (!email) { mostrarMsg('Escribe tu correo para enviarte el enlace.', 'error'); return; }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        mostrarMsg('Te enviamos un correo para restablecer la contraseña.', 'ok');
+      } catch (e) {
+        mostrarMsg(traducirError(e.code), 'error');
+      }
+    });
+
+    // Estado de autenticación = fuente de verdad del acceso a la app
+    onAuthStateChanged(auth, (user) => {
+      $('fb-auth-loading').style.display = 'none';
+      if (user) {
+        $('fb-auth-overlay').style.display = 'none';
+        if (window.aplicarSesionDesdeEmail) window.aplicarSesionDesdeEmail(user.email);
+      } else {
+        if (window.limpiarSesionLocal) window.limpiarSesionLocal();
+        $('fb-auth-form').style.display = 'block';
+        $('fb-auth-overlay').style.display = 'flex';
+      }
+    });
   }
 </script>
 
