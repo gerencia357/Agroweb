@@ -1356,6 +1356,9 @@
     </div>
     <div class="topbar-right">
       <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="if(confirm('¿Recargar los datos de demostración? Esto reemplaza todos los datos actuales.')) cargarDemo()" title="Recargar datos demo">🎬 Demo</button>
+      <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="exportarRespaldo()" title="Descargar respaldo de todos los datos">💾 Respaldo</button>
+      <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="document.getElementById('input-respaldo').click()" title="Restaurar desde un respaldo">📂</button>
+      <input type="file" id="input-respaldo" accept="application/json,.json" style="display:none" onchange="importarRespaldo(this)">
       <button class="btn-cancel" style="font-size:12px; padding:5px 12px" onclick="if(confirm('¿Borrar TODOS los datos y empezar de cero?')) { localStorage.clear(); location.reload(); }" title="Limpiar todo">🧹</button>
       <div class="finca-badge">🌴 Valparaíso · Maní, Casanare</div>
       <button class="btn-coroz" onclick="showPage('coroz', null)">🤖 Coroz:IA</button>
@@ -1613,7 +1616,11 @@
           <div class="page-heading">Historial de labores</div>
           <div class="page-sub" id="labores-sub">Vista consolidada de todas las actividades registradas</div>
         </div>
-        <button class="btn-primary" style="margin-top:0" onclick="abrirModalLabor()">+ Registrar labor</button>
+        <div style="display:flex; gap:8px">
+          <button class="btn-cancel" style="margin-top:0" onclick="exportarLabores()">⬇ Excel</button>
+          <button class="btn-cancel" style="margin-top:0" onclick="imprimirElemento('labores-lista','Labores')">🖨️</button>
+          <button class="btn-primary" style="margin-top:0" onclick="abrirModalLabor()">+ Registrar labor</button>
+        </div>
       </div>
       <div class="panel-full">
         <div class="panel-body" id="labores-lista"></div>
@@ -1627,7 +1634,11 @@
           <div class="page-heading">📊 Resumen</div>
           <div class="page-sub" id="resumen-sub">Consolidado por etapa, finca o lote</div>
         </div>
-        <div style="display:flex; gap:6px" id="resumen-toggle"></div>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+          <span id="resumen-toggle" style="display:flex; gap:6px"></span>
+          <button class="btn-cancel" style="margin-top:0; padding:5px 12px; font-size:12px" onclick="exportarResumen()">⬇ Excel</button>
+          <button class="btn-cancel" style="margin-top:0; padding:5px 12px; font-size:12px" onclick="imprimirElemento('resumen-tabla','Resumen')">🖨️</button>
+        </div>
       </div>
       <div class="lotes-resumen" id="resumen-kpis"></div>
       <div class="panel-full">
@@ -1870,6 +1881,7 @@
           <div class="page-sub" id="lotes-sub">Cargando...</div>
         </div>
         <div style="display:flex; gap:10px">
+          <button class="btn-cancel" style="margin-top:0" onclick="exportarLotes()">⬇ Excel</button>
           <button class="btn-cancel" style="margin-top:0" onclick="abrirModalMasiva()">📥 Carga masiva</button>
           <button class="btn-primary" style="margin-top:0" onclick="abrirModalLote()">+ Nuevo lote</button>
         </div>
@@ -2907,6 +2919,105 @@
   }
 
   const fmtCOP = v => '$' + Math.round(v).toLocaleString('es-CO');
+
+  // ── EXPORTAR / RESPALDO DE DATOS ────────────────────────
+  function descargarArchivo(nombre, contenido, tipo) {
+    const blob = new Blob([contenido], { type: tipo || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  }
+  function fechaArchivo() { return new Date().toISOString().slice(0,10); }
+  // CSV con BOM (Excel abre bien los acentos) y separador ; (locale es-CO)
+  function aCSV(filas, columnas) {
+    const esc = v => {
+      if (v === null || v === undefined) return '';
+      let str = String(v);
+      if (/[";\n]/.test(str)) str = '"' + str.replace(/"/g, '""') + '"';
+      return str;
+    };
+    const head = columnas.map(c => esc(c.h)).join(';');
+    const body = filas.map(fila => columnas.map(c => esc(typeof c.v === 'function' ? c.v(fila) : fila[c.v])).join(';')).join('\n');
+    return '﻿' + head + '\n' + body;
+  }
+  function exportarCSV(nombre, filas, columnas) {
+    if (!filas || !filas.length) { alert('No hay datos para exportar'); return; }
+    descargarArchivo(nombre + '_' + fechaArchivo() + '.csv', aCSV(filas, columnas), 'text/csv;charset=utf-8');
+  }
+  // Respaldo completo: todas las claves agroweb_* (menos la API key) → JSON
+  function exportarRespaldo() {
+    const datos = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('agroweb_') === 0 && k !== 'agroweb_claude_key') datos[k] = localStorage.getItem(k);
+    }
+    const paquete = { app: 'AgroWeb', finca: 'Valparaíso', version: (typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : ''), fecha: new Date().toISOString(), datos };
+    descargarArchivo('agroweb_respaldo_' + fechaArchivo() + '.json', JSON.stringify(paquete, null, 2), 'application/json');
+  }
+  function importarRespaldo(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const paquete = JSON.parse(reader.result);
+        if (!paquete.datos) throw new Error('Archivo no válido');
+        if (!confirm('Esto reemplazará TODOS los datos actuales con los del respaldo (' + (paquete.fecha||'').slice(0,10) + '). ¿Continuar?')) { input.value=''; return; }
+        Object.keys(paquete.datos).forEach(k => { if (k.indexOf('agroweb_') === 0) localStorage.setItem(k, paquete.datos[k]); });
+        alert('Respaldo restaurado. La app se recargará.');
+        location.reload();
+      } catch (e) {
+        alert('No se pudo leer el respaldo: ' + e.message);
+      }
+      input.value = '';
+    };
+    reader.readAsText(file);
+  }
+  function imprimirElemento(elId, titulo) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const w = window.open('', '_blank');
+    w.document.write('<html><head><title>' + (titulo||'AgroWeb') + '</title><meta charset="utf-8">' +
+      '<style>body{font-family:Arial,sans-serif;padding:24px;color:#111} h1{font-size:18px;margin:0 0 4px} .sub{color:#666;font-size:12px;margin-bottom:16px}' +
+      'table{border-collapse:collapse;width:100%;font-size:12px} th,td{border:1px solid #ccc;padding:6px 8px;text-align:left} th{background:#f0f0f0}' +
+      'details{margin-bottom:10px} summary{font-weight:600;margin:8px 0} button,.btn-icon{display:none!important}</style></head><body>' +
+      '<h1>🌴 Valparaíso · ' + (titulo||'') + '</h1><div class="sub">AgroWeb · ' + new Date().toLocaleString('es-CO') + '</div>' +
+      el.innerHTML + '</body></html>');
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 300);
+  }
+
+  const COLS_CSV_LABORES = [
+    {h:'Fecha', v:'fecha'}, {h:'Actividad', v:'actividad'}, {h:'Lote', v:'lote'},
+    {h:'Predio', v:'predio'}, {h:'Variedad', v:'variedad'}, {h:'Cantidad', v:'cantidad'},
+    {h:'Unidad', v:'unidad'}, {h:'Pase', v:'pase'}, {h:'Dosis g/palma', v:'dosisGr'},
+    {h:'Kg', v:'kg'}, {h:'Bultos', v:'bultos'}, {h:'Ha plano', v:'hasPlano'},
+    {h:'ML', v:'ml'}, {h:'M3', v:'m3'}, {h:'Trabajador/Contratista', v:'trabajador'},
+    {h:'Costo', v:'costo'}, {h:'Estado', v:l=>l.estado||'pendiente'}, {h:'Detalle', v:'detalle'}
+  ];
+  function exportarLabores() { exportarCSV('labores', labores, COLS_CSV_LABORES); }
+  function exportarModulo(key) {
+    const m = modulosActividad[key];
+    const regs = labores.filter(l => actividadCategoria[l.actividad] === m.categoria);
+    exportarCSV(m.titulo.toLowerCase().replace(/[^a-z0-9]+/g,'_'), regs, COLS_CSV_LABORES);
+  }
+  function exportarLotes() {
+    exportarCSV('lotes', lotes, [
+      {h:'Lote', v:'numero'}, {h:'Etapa', v:'etapa'}, {h:'Predio', v:'nombre'}, {h:'Variedad', v:'variedad'},
+      {h:'Hectáreas', v:'has'}, {h:'Palmas', v:'palmas'}, {h:'Densidad', v:'densidad'}, {h:'Estado', v:'estado'}, {h:'Obs', v:'obs'}
+    ]);
+  }
+  function exportarTablaDOM(containerId, nombre) {
+    const cont = document.getElementById(containerId);
+    const table = cont && cont.querySelector('table');
+    if (!table) { alert('No hay tabla para exportar'); return; }
+    const heads = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    const rows = [...table.querySelectorAll('tbody tr')].map(tr => [...tr.querySelectorAll('td,th')].map(td => td.textContent.trim()));
+    exportarCSV(nombre, rows, heads.map((h,i) => ({ h, v: r => r[i] })));
+  }
+  function exportarResumen() { exportarTablaDOM('resumen-tabla', 'resumen_' + resumenDim); }
 
   // Parser de rangos: "24" → {desde:24, hasta:24} · "20-35" → {desde:20, hasta:35} · "" → null
   function parseRango(str) {
@@ -4696,6 +4807,7 @@
             <div class="page-sub" id="${key}-sub">${m.sub}</div>
           </div>
           <div style="display:flex; gap:8px">
+            <button class="btn-cancel" style="margin-top:0" onclick="exportarModulo('${key}')">⬇ Excel</button>
             <button class="btn-cancel" style="margin-top:0" onclick="abrirMasivaLabores('${key}')">📥 Masiva</button>
             <button class="btn-cancel" style="margin-top:0; border-color:var(--dorado); color:var(--dorado-claro)" onclick="abrirModoNFC('${key}')">📡 Modo NFC</button>
             <button class="btn-primary" style="margin-top:0" onclick="abrirModalLabor('${m.botones.find(b=>b.primario).actividad}')">＋ Manual</button>
