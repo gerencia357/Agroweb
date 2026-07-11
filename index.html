@@ -2638,6 +2638,7 @@
 
   // ── LABORES ─────────────────────────────────────────────
   let labores = JSON.parse(localStorage.getItem('agroweb_labores') || '[]');
+  let lotes = JSON.parse(localStorage.getItem('agroweb_lotes') || '[]'); // declarado temprano: renderLabores lo usa al agrupar por lote
 
   // Mapeo actividad de labor → categoría de presupuesto (consulta el catálogo maestro primero)
   const actividadCategoriaBase = {
@@ -5614,7 +5615,7 @@
   });
 
   // ── LOTES ──────────────────────────────────────────────
-  let lotes = JSON.parse(localStorage.getItem('agroweb_lotes') || '[]');
+  lotes = JSON.parse(localStorage.getItem('agroweb_lotes') || '[]');
 
   function saveLotes() {
     localStorage.setItem('agroweb_lotes', JSON.stringify(lotes));
