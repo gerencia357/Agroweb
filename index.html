@@ -1934,6 +1934,11 @@
         </div>
 
         <div class="coroz-sidebar">
+          <div class="coroz-sidebar-title">Conexión IA</div>
+          <div style="font-size:12px; color:var(--texto-dim); margin-bottom:8px" id="coroz-key-estado">🔴 Sin API key — pega tu clave de Claude para activar</div>
+          <input id="coroz-key-input" type="password" placeholder="sk-ant-..." style="width:100%; margin-bottom:6px; font-size:12px; padding:7px 10px" autocomplete="off">
+          <button class="btn-cancel" style="width:100%; margin-bottom:6px; font-size:12px; padding:6px" onclick="guardarClaveCoroz()">Guardar clave</button>
+          <div style="font-size:10.5px; color:var(--texto-dim); line-height:1.4; margin-bottom:16px">Tu clave se guarda solo en este navegador. Consíguela en console.anthropic.com.</div>
           <div class="coroz-sidebar-title">Preguntas frecuentes</div>
           <div class="sugerencia" onclick="setMsg(this.innerText)">¿Cuándo fue la última polinización en el lote 1?</div>
           <div class="sugerencia" onclick="setMsg(this.innerText)">¿Qué palmas tienen PC activo este mes?</div>
@@ -6034,11 +6039,52 @@
     };
     document.getElementById('topbar-title').textContent = titles[id] || id;
     if (id === 'resumen' && typeof renderResumen === 'function') renderResumen();
+    if (id === 'coroz' && typeof actualizarEstadoClaveCoroz === 'function') actualizarEstadoClaveCoroz();
   }
 
   function setMsg(text) {
     document.getElementById('chat-input').value = text;
     document.getElementById('chat-input').focus();
+  }
+
+  // ── COROZ:IA (conectado a la API de Claude) ──
+  let corozHistorial = [];
+  function guardarClaveCoroz() {
+    const inp = document.getElementById('coroz-key-input');
+    const k = (inp.value || '').trim();
+    if (k) { localStorage.setItem('agroweb_claude_key', k); inp.value = ''; }
+    else { localStorage.removeItem('agroweb_claude_key'); }
+    actualizarEstadoClaveCoroz();
+  }
+  function actualizarEstadoClaveCoroz() {
+    const el = document.getElementById('coroz-key-estado');
+    if (!el) return;
+    const k = localStorage.getItem('agroweb_claude_key');
+    el.innerHTML = k ? '🟢 IA conectada' : '🔴 Sin API key — pega tu clave de Claude para activar';
+  }
+
+  function corozContexto() {
+    const e1 = lotes.filter(l => l.etapa === 'I'), e2 = lotes.filter(l => l.etapa === 'II');
+    const sum = (arr, f) => arr.reduce((s,l)=>s+(l[f]||0),0);
+    const fincas = {};
+    lotes.forEach(l => { const p=(l.nombre||'—').split('/')[0].trim(); (fincas[p]=fincas[p]||{n:0,pal:0}); fincas[p].n++; fincas[p].pal+=l.palmas||0; });
+    const porAct = {};
+    labores.forEach(l => { porAct[l.actividad]=(porAct[l.actividad]||{n:0,cant:0,costo:0}); porAct[l.actividad].n++; porAct[l.actividad].cant+=l.cantidad||0; porAct[l.actividad].costo+=l.costo||0; });
+    const fert = labores.filter(l=>l.actividad==='Fertilización');
+    const kgFert = fert.reduce((s,l)=>s+(l.kg||0),0);
+    const pend = labores.filter(l=>(l.estado||'pendiente')==='pendiente').length;
+    const det = (typeof detecciones!=='undefined'?detecciones:[]);
+    const detAct = det.filter(d=>d.estado==='activo'||d.estado==='tratamiento').length;
+    let ctx = 'DATOS ACTUALES DE VALPARAÍSO (para responder con precisión):\n';
+    ctx += `- Lotes: ${lotes.length} (Etapa I: ${e1.length}, Etapa II: ${e2.length}). Palmas totales: ${sum(lotes,'palmas').toLocaleString('es-CO')}. Ha sembradas: ${Math.round(sum(lotes,'has'))}.\n`;
+    ctx += `- Etapa I: ${sum(e1,'palmas').toLocaleString('es-CO')} palmas, ${Math.round(sum(e1,'has'))} ha.\n`;
+    ctx += '- Fincas/predios: ' + Object.entries(fincas).map(([p,v])=>`${p} (${v.n} lotes, ${v.pal.toLocaleString('es-CO')} palmas)`).join('; ') + '.\n';
+    ctx += `- Labores registradas: ${labores.length} (${pend} pendientes de aprobación).\n`;
+    ctx += '- Por actividad: ' + Object.entries(porAct).map(([a,v])=>`${a}: ${v.n} reg, ${Math.round(v.cant).toLocaleString('es-CO')} und, ${fmtCOP(v.costo)}`).join('; ') + '.\n';
+    ctx += `- Fertilización: ${fert.length} pases, ${Math.round(kgFert).toLocaleString('es-CO')} kg aplicados.\n`;
+    ctx += `- Sanidad: ${det.length} detecciones (${detAct} activas/en tratamiento).\n`;
+    ctx += 'Si te preguntan algo que no está en estos datos, dilo con claridad. Usa cifras exactas de arriba cuando apliquen.';
+    return ctx;
   }
 
   async function sendMsg() {
@@ -6047,8 +6093,6 @@
     if (!msg) return;
 
     const messages = document.getElementById('chat-messages');
-
-    // User message
     const userDiv = document.createElement('div');
     userDiv.className = 'msg msg-user';
     userDiv.textContent = msg;
@@ -6056,39 +6100,72 @@
     input.value = '';
     messages.scrollTop = messages.scrollHeight;
 
-    // Typing indicator
+    const apiKey = localStorage.getItem('agroweb_claude_key');
+    if (!apiKey) {
+      const aviso = document.createElement('div');
+      aviso.className = 'msg msg-bot';
+      aviso.innerHTML = 'Aún no has conectado la IA. Pega tu <b>API key de Claude</b> (sk-ant-…) en el panel derecho “Conexión IA” y pulsa <b>Guardar clave</b>. La consigues en <b>console.anthropic.com</b>. Tu clave se guarda solo en este navegador.';
+      messages.appendChild(aviso);
+      messages.scrollTop = messages.scrollHeight;
+      return;
+    }
+
     const typingDiv = document.createElement('div');
     typingDiv.className = 'msg msg-bot';
     typingDiv.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
     messages.appendChild(typingDiv);
     messages.scrollTop = messages.scrollHeight;
 
+    corozHistorial.push({ role: 'user', content: msg });
+    if (corozHistorial.length > 20) corozHistorial = corozHistorial.slice(-20);
+
+    const sistema = `Eres Coroz:IA, el asistente de AgroWeb para la finca Valparaíso, plantación de palma de aceite (Elaeis guineensis) en Maní, Casanare, Colombia, en fase de establecimiento (Etapa I y II).
+
+Especialidad: manejo técnico de palma — polinización asistida (ANA), fitosanidad (Pudrición del Cogollo, Marchitez Sorpresiva, Anillo Rojo, Pestalotiopsis), plagas (Rhynchophorus, Strategus), fertilización, plateo, drenajes, coberturas, preparación de terrenos y cosecha de RFF.
+
+El administrador es Santiago. Responde en español, conciso y técnicamente preciso. Cuando te pregunten por datos de la finca, usa las cifras reales que te doy a continuación.
+
+${corozContexto()}`;
+
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: `Eres Coroz:IA, el asistente inteligente de AgroWeb para la finca Valparaíso, una plantación de palma africana de 2.094 hectáreas ubicada en Maní, Casanare, Colombia. La finca está en fase pre-operacional.
-
-Tu especialidad es el manejo técnico de palma de aceite (Elaeis guineensis): polinización asistida (ANA 1, ANA 2, ANA 3), manejo fitosanitario (PC - Pudrición del Cogollo, Marchitez Sorpresiva, Anillo Rojo, Pestalotiopsis, Flecha Seca), plagas (Rhynchophorus palmarum, Strategus spp., Opsiphanes spp., Sagalassa valida), cosecha de RFF (Racimos de Fruta Fresca), labores culturales (poda, plateo, fertilización) y gestión agronómica general.
-
-El administrador es Santiago. Respondes en español, de forma concisa y técnicamente precisa. Si no tienes datos reales de la finca aún (porque el sistema acaba de iniciar), lo indicas con amabilidad y orientas sobre cómo obtenerlos.`,
-          messages: [{ role: "user", content: msg }]
+          model: 'claude-opus-4-8',
+          max_tokens: 1024,
+          system: sistema,
+          messages: corozHistorial
         })
       });
 
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || "No pude procesar tu consulta. Intenta de nuevo.";
+      if (!response.ok) {
+        let detalle = 'Error ' + response.status;
+        try { const e = await response.json(); detalle = (e.error && e.error.message) || detalle; } catch(_) {}
+        typingDiv.innerHTML = '';
+        typingDiv.textContent = response.status === 401
+          ? 'La API key no es válida o expiró. Revísala en el panel “Conexión IA”.'
+          : 'No pude conectar con la IA: ' + detalle;
+        corozHistorial.pop();
+        messages.scrollTop = messages.scrollHeight;
+        return;
+      }
 
+      const data = await response.json();
+      const reply = (data.content && data.content[0] && data.content[0].text) || 'No pude procesar tu consulta. Intenta de nuevo.';
+      corozHistorial.push({ role: 'assistant', content: reply });
       typingDiv.innerHTML = '';
       typingDiv.textContent = reply;
     } catch (err) {
       typingDiv.innerHTML = '';
-      typingDiv.textContent = "Error de conexión. Verifica tu acceso a la API de Claude.";
+      typingDiv.textContent = 'Error de conexión con la API de Claude. Si estás en el navegador, puede ser un bloqueo de red (CORS) de tu entorno.';
+      corozHistorial.pop();
     }
-
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -6113,6 +6190,7 @@ El administrador es Santiago. Respondes en español, de forma concisa y técnica
   renderDetecciones();
   renderCensoProduccion();
   renderTodosModulosActividad();
+  if (typeof actualizarEstadoClaveCoroz === 'function') actualizarEstadoClaveCoroz();
 
   // Sesión: login si no hay, permisos si hay
   if (sesion) {
