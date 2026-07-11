@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgroWeb — Valparaíso</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -1510,16 +1512,16 @@
           <div class="page-heading">Mapa de palmas</div>
           <div class="page-sub">Georeferenciación de lotes y palmas individuales</div>
         </div>
-        <button class="btn-primary" style="margin-top:0">📁 Importar KML / GeoJSON</button>
+        <button class="btn-primary" style="margin-top:0" onclick="document.getElementById('mapa-file').click()">📁 Importar GeoJSON</button>
       </div>
 
-      <div class="map-placeholder">
-        <div class="map-placeholder-icon">🗺️</div>
-        <div class="map-placeholder-text">Mapa de Valparaíso</div>
-        <div class="map-placeholder-sub">Exporte su archivo KML o GeoJSON desde AvenZQ e impórtelo aquí</div>
-        <div class="map-placeholder-sub">Cada palma aparecerá como un punto con su historial de labores</div>
-        <button class="btn-primary">Importar archivo de mapa</button>
+      <div class="map-toolbar" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px">
+        <div id="mapa-contador" style="font-size:12px; color:var(--texto-suave); font-weight:600">—</div>
+        <div id="mapa-leyenda" style="display:flex; gap:12px; flex-wrap:wrap; margin-left:auto"></div>
       </div>
+      <div id="mapa-leaflet" style="height:460px; border-radius:8px; overflow:hidden; border:1px solid var(--borde)"></div>
+      <div id="mapa-vacio" style="display:none; margin-top:12px; padding:16px; background:var(--fondo-card2); border:1px dashed var(--borde); border-radius:8px; font-size:13px; color:var(--texto-dim); text-align:center"></div>
+      <input type="file" id="mapa-file" accept=".geojson,.json" style="display:none" onchange="importarGeoJSON(this)">
     </div>
 
     <!-- FORMULARIOS -->
@@ -6125,6 +6127,115 @@
   actualizarDashboard();
 
   // ── NAVEGACIÓN ──────────────────────────────────────────
+  // -- MAPA (Leaflet / OpenStreetMap) --
+  const catColorMapa = {
+    'Polinizacion': '#e879b9', 'Cosecha': '#f59e0b', 'Mantenimiento': '#38bdf8',
+    'Sanidad': '#ef4444', 'Censo': '#a78bfa', 'Fertilizacion': '#22c55e', 'Otro': '#94a3b8'
+  };
+  function colorCat(cat) {
+    if (catColorMapa[cat]) return catColorMapa[cat];
+    // tolerar tildes (Polinizacion/Polinizacion, Fertilizacion/Fertilizacion)
+    var norm = (cat || '').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return catColorMapa[norm] || '#94a3b8';
+  }
+  let mapaLeaflet = null, mapaCapa = null, mapaGeoCapa = null;
+  function renderMapa() {
+    const vacio = document.getElementById('mapa-vacio');
+    const cont = document.getElementById('mapa-contador');
+    const ley = document.getElementById('mapa-leyenda');
+    if (typeof L === 'undefined') {
+      if (vacio) { vacio.style.display = 'block'; vacio.innerHTML = '\U0001F310 Se requiere conexion a internet para cargar el mapa base (OpenStreetMap / Leaflet).'; }
+      if (cont) cont.textContent = '';
+      if (ley) ley.innerHTML = '';
+      return;
+    }
+    // Recolectar puntos georreferenciados de las labores
+    const puntos = [];
+    (labores || []).forEach(function(l) {
+      if (l.gps && l.gps.lat != null && l.gps.lng != null) {
+        puntos.push({ lat: l.gps.lat, lng: l.gps.lng, labor: l, linea: l.linea });
+      }
+      if (Array.isArray(l.puntos)) {
+        l.puntos.forEach(function(p) {
+          if (p && p.lat != null && p.lng != null) puntos.push({ lat: p.lat, lng: p.lng, labor: l, linea: p.linea });
+        });
+      }
+    });
+    // Inicializar el mapa una sola vez
+    if (!mapaLeaflet) {
+      mapaLeaflet = L.map('mapa-leaflet').setView([4.8165, -72.2892], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+      }).addTo(mapaLeaflet);
+      mapaCapa = L.featureGroup().addTo(mapaLeaflet);
+    }
+    mapaCapa.clearLayers();
+    puntos.forEach(function(pt) {
+      const l = pt.labor;
+      const cat = actividadCategoria[l.actividad] || 'Otro';
+      const color = colorCat(cat);
+      const ic = catIcono[cat] || '\U0001F4CC';
+      const m = L.circleMarker([pt.lat, pt.lng], {
+        radius: 7, color: '#ffffff', weight: 1.5, fillColor: color, fillOpacity: 0.9
+      });
+      const esc = function(v) { return (v == null ? '' : String(v)).replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+      const html = '<div style="font-size:12px; line-height:1.5; min-width:150px">' +
+        '<div style="font-weight:600; margin-bottom:2px">' + ic + ' ' + esc(l.actividad) + '</div>' +
+        'Lote ' + esc(l.lote || '—') + (pt.linea ? ' · Línea ' + esc(pt.linea) : '') + '<br>' +
+        (l.trabajador ? '\U0001F464 ' + esc(l.trabajador) + '<br>' : '') +
+        (l.fecha ? '\U0001F4C5 ' + esc(l.fecha) + '<br>' : '') +
+        (l.obs ? '<span style="color:#888">' + esc(l.obs) + '</span>' : '') +
+        '</div>';
+      m.bindPopup(html);
+      mapaCapa.addLayer(m);
+    });
+    const total = puntos.length;
+    if (cont) cont.textContent = total + (total === 1 ? ' punto georreferenciado' : ' puntos georreferenciados');
+    if (total > 0) {
+      try { mapaLeaflet.fitBounds(mapaCapa.getBounds().pad(0.2)); } catch (e) {}
+      if (vacio) vacio.style.display = 'none';
+    } else if (vacio) {
+      vacio.style.display = 'block';
+      vacio.innerHTML = '\U0001F4CD Aun no hay labores georreferenciadas. Captura labores con el lector NFC (con GPS activo) o importa un archivo GeoJSON para verlas aqui.';
+    }
+    if (ley) {
+      const cats = {};
+      puntos.forEach(function(pt) { const c = actividadCategoria[pt.labor.actividad] || 'Otro'; cats[c] = (cats[c] || 0) + 1; });
+      ley.innerHTML = Object.keys(cats).map(function(c) {
+        return '<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--texto-suave)">' +
+          '<span style="width:10px; height:10px; border-radius:50%; background:' + colorCat(c) + '; display:inline-block"></span>' +
+          c + ' (' + cats[c] + ')</span>';
+      }).join('');
+    }
+    setTimeout(function() { try { mapaLeaflet.invalidateSize(); } catch (e) {} }, 120);
+  }
+
+  function importarGeoJSON(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const gj = JSON.parse(e.target.result);
+        if (typeof L === 'undefined' || !mapaLeaflet) { alert('El mapa no esta disponible (se requiere conexion a internet).'); return; }
+        if (mapaGeoCapa) { mapaLeaflet.removeLayer(mapaGeoCapa); }
+        mapaGeoCapa = L.geoJSON(gj, {
+          style: { color: '#22c55e', weight: 2, fillColor: '#22c55e', fillOpacity: 0.12 },
+          onEachFeature: function(feat, layer) {
+            const p = feat.properties || {};
+            const nom = p.name || p.Name || p.nombre || p.lote || p.NOMBRE || '';
+            if (nom) layer.bindPopup('<div style="font-size:12px; font-weight:600">' + String(nom) + '</div>');
+          }
+        }).addTo(mapaLeaflet);
+        try { mapaLeaflet.fitBounds(mapaGeoCapa.getBounds().pad(0.1)); } catch (err) {}
+      } catch (err) {
+        alert('No se pudo leer el archivo GeoJSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
   function showPage(id, el) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -6152,6 +6263,7 @@
     document.getElementById('topbar-title').textContent = titles[id] || id;
     if (id === 'resumen' && typeof renderResumen === 'function') renderResumen();
     if (id === 'coroz' && typeof actualizarEstadoClaveCoroz === 'function') actualizarEstadoClaveCoroz();
+    if (id === 'mapa' && typeof renderMapa === 'function') renderMapa();
   }
 
   function setMsg(text) {
