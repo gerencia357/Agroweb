@@ -2630,9 +2630,9 @@
   // ── SESIÓN Y PERMISOS (declarados primero: se usan en todos los renders) ──
   const permisosPorRol = {
     'Administrador':       { paginas: '*', aprobar: true },
-    'Supervisor':          { paginas: ['dashboard','mapa','labores','polinizacion','mantenimiento','fertilizacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
+    'Supervisor':          { paginas: ['dashboard','mapa','labores','polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
     'Operador báscula':    { paginas: ['dashboard','bascula'], aprobar: false },
-    'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','sanidad','cosecha'], aprobar: false }
+    'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha'], aprobar: false }
   };
   let sesion = JSON.parse(localStorage.getItem('agroweb_sesion') || 'null');
 
