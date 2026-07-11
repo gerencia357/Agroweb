@@ -1236,6 +1236,9 @@
     <div class="nav-item active" onclick="showPage('dashboard', this)" title="Dashboard">
       <span class="nav-icon">🌿</span> <span class="nav-label">Dashboard</span>
     </div>
+    <div class="nav-item" onclick="showPage('resumen', this)" title="Resumen por etapa, finca o lote">
+      <span class="nav-icon">📊</span> <span class="nav-label">Resumen</span>
+    </div>
     <div class="nav-item" onclick="showPage('mapa', this)" title="Mapa de palmas">
       <span class="nav-icon">🗺️</span> <span class="nav-label">Mapa de palmas</span>
     </div>
@@ -1614,6 +1617,21 @@
       </div>
       <div class="panel-full">
         <div class="panel-body" id="labores-lista"></div>
+      </div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="page" id="page-resumen">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">📊 Resumen</div>
+          <div class="page-sub" id="resumen-sub">Consolidado por etapa, finca o lote</div>
+        </div>
+        <div style="display:flex; gap:6px" id="resumen-toggle"></div>
+      </div>
+      <div class="lotes-resumen" id="resumen-kpis"></div>
+      <div class="panel-full">
+        <div class="panel-body" id="resumen-tabla"></div>
       </div>
     </div>
 
@@ -2630,7 +2648,7 @@
   // ── SESIÓN Y PERMISOS (declarados primero: se usan en todos los renders) ──
   const permisosPorRol = {
     'Administrador':       { paginas: '*', aprobar: true },
-    'Supervisor':          { paginas: ['dashboard','mapa','labores','polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
+    'Supervisor':          { paginas: ['dashboard','resumen','mapa','labores','polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
     'Operador báscula':    { paginas: ['dashboard','bascula'], aprobar: false },
     'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha'], aprobar: false }
   };
@@ -5703,6 +5721,73 @@
   const estadoLabel = { preparacion: 'En preparación', establecimiento: 'Establecimiento', produccion: 'En producción' };
   const estadoClass = { preparacion: 'estado-preparacion', establecimiento: 'estado-establecimiento', produccion: 'estado-produccion' };
 
+  let resumenDim = 'etapa';
+  function setResumenDim(d) { resumenDim = d; renderResumen(); }
+
+  function renderResumen() {
+    const cont = document.getElementById('resumen-tabla');
+    if (!cont) return;
+    const dim = resumenDim;
+
+    const tog = document.getElementById('resumen-toggle');
+    if (tog) {
+      const b = (d,t) => `<button class="btn-cancel" style="margin-top:0; padding:5px 12px; font-size:12px; ${dim===d?'border-color:var(--verde-claro); color:var(--verde-claro)':''}" onclick="setResumenDim('${d}')">${t}</button>`;
+      tog.innerHTML = b('etapa','Por etapa') + b('finca','Por finca') + b('lote','Por lote');
+    }
+
+    const predioPrincipal = n => (n||'—').split('/')[0].trim();
+    const loteDeLabor = l => lotes.find(L => String(L.numero) === String(l.lote));
+    const claveLote = L => dim==='etapa' ? ('Etapa ' + (L.etapa||'—'))
+      : dim==='finca' ? predioPrincipal(L.nombre)
+      : ('Lote ' + L.numero + (L.nombre ? (' · ' + L.nombre) : ''));
+    const claveLabor = l => {
+      const L = loteDeLabor(l);
+      if (dim==='etapa') return 'Etapa ' + (L ? L.etapa : 'I');
+      if (dim==='finca') return L ? predioPrincipal(L.nombre) : 'General';
+      return L ? ('Lote ' + L.numero + (L.nombre ? (' · ' + L.nombre) : '')) : 'General / infraestructura';
+    };
+
+    const grupos = {};
+    const g = k => (grupos[k] = grupos[k] || {nLotes:0, has:0, palmas:0, nLab:0, costo:0, orden:9999});
+    lotes.forEach(L => { const o=g(claveLote(L)); o.nLotes++; o.has+=L.has||0; o.palmas+=L.palmas||0; if(dim==='lote') o.orden=(L.etapa==='II'?1000:0)+(L.numero||0); });
+    labores.forEach(l => { const o=g(claveLabor(l)); o.nLab++; o.costo+=l.costo||0; });
+
+    let keys = Object.keys(grupos);
+    if (dim==='lote') keys.sort((a,b)=>(grupos[a].orden-grupos[b].orden) || a.localeCompare(b));
+    else keys.sort((a,b)=>a.localeCompare(b));
+
+    const tot = keys.reduce((t,k)=>{const o=grupos[k]; t.nLotes+=o.nLotes; t.has+=o.has; t.palmas+=o.palmas; t.nLab+=o.nLab; t.costo+=o.costo; return t;}, {nLotes:0,has:0,palmas:0,nLab:0,costo:0});
+
+    const kp = document.getElementById('resumen-kpis');
+    if (kp) kp.innerHTML = [
+      {v: tot.nLotes, l:'Lotes'},
+      {v: tot.has.toLocaleString('es-CO',{maximumFractionDigits:1}), l:'Hectáreas'},
+      {v: tot.palmas.toLocaleString('es-CO'), l:'Palmas'},
+      {v: tot.nLab, l:'Labores'},
+      {v: fmtCOP(tot.costo), l:'Costo ejecutado'}
+    ].map(k=>`<div class="resumen-chip"><div class="resumen-val">${k.v}</div><div class="resumen-label">${k.l}</div></div>`).join('');
+
+    const dimLabel = dim==='etapa' ? 'Etapa' : dim==='finca' ? 'Finca' : 'Lote';
+    cont.innerHTML = `<table class="lotes-table">
+      <thead><tr><th>${dimLabel}</th><th>Lotes</th><th>Hectáreas</th><th>Palmas</th><th>Densidad</th><th>Labores</th><th>Costo ejecutado</th></tr></thead>
+      <tbody>${keys.map(k=>{const o=grupos[k]; const dens=o.has>0?Math.round(o.palmas/o.has):0; return `<tr>
+        <td style="color:var(--verde-claro); font-weight:500">${k}</td>
+        <td>${o.nLotes||'—'}</td>
+        <td>${o.has?o.has.toLocaleString('es-CO',{maximumFractionDigits:1}):'—'}</td>
+        <td>${o.palmas?o.palmas.toLocaleString('es-CO'):'—'}</td>
+        <td>${dens?dens+'/ha':'—'}</td>
+        <td>${o.nLab||'—'}</td>
+        <td>${o.costo?fmtCOP(o.costo):'—'}</td>
+      </tr>`;}).join('')}
+        <tr style="border-top:2px solid var(--verde-claro); font-weight:600">
+          <td>TOTAL</td><td>${tot.nLotes}</td><td>${tot.has.toLocaleString('es-CO',{maximumFractionDigits:1})}</td><td>${tot.palmas.toLocaleString('es-CO')}</td><td>${tot.has>0?Math.round(tot.palmas/tot.has)+'/ha':'—'}</td><td>${tot.nLab}</td><td>${fmtCOP(tot.costo)}</td>
+        </tr>
+      </tbody></table>`;
+
+    const sub = document.getElementById('resumen-sub');
+    if (sub) sub.textContent = `Consolidado ${dim==='etapa'?'por etapa':dim==='finca'?'por finca':'por lote'} · ${keys.length} grupos`;
+  }
+
   function renderLotes() {
     const container = document.getElementById('lotes-cards');
     const totalHas = lotes.reduce((s,l) => s + (l.has||0), 0);
@@ -5764,7 +5849,7 @@
         </div>
         <div class="lote-card-footer">
           <span class="estado-chip ${estadoClass[l.estado]||'estado-preparacion'}">${estadoLabel[l.estado]||l.estado}</span>
-          <span class="lote-labores">0 labores</span>
+          <span class="lote-labores">${labores.filter(x=>String(x.lote)===String(l.numero)).length} labores</span>
         </div>
       </div>
     `).join('');
@@ -5828,9 +5913,11 @@
       bascula: 'Báscula — Despacho RFF',
       sanidad: 'Sanidad y plagas',
       presupuesto: 'Presupuesto de actividades',
-      coroz: 'Coroz:IA'
+      coroz: 'Coroz:IA',
+      resumen: 'Resumen por etapa, finca o lote'
     };
     document.getElementById('topbar-title').textContent = titles[id] || id;
+    if (id === 'resumen' && typeof renderResumen === 'function') renderResumen();
   }
 
   function setMsg(text) {
