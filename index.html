@@ -810,6 +810,25 @@
   .field select option { background: var(--fondo-card2); }
   .field textarea { resize: vertical; min-height: 70px; }
 
+  /* Barra de filtros (Labores) */
+  .filtros-bar {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+    padding: 12px 14px; margin-bottom: 12px;
+    background: var(--fondo-card2); border: 1px solid var(--borde); border-radius: 10px;
+  }
+  .filtros-bar .fb-item { display: flex; flex-direction: column; gap: 4px; }
+  .filtros-bar label {
+    font-size: 10px; font-weight: 600; color: var(--texto-suave);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .filtros-bar select, .filtros-bar input {
+    background: var(--fondo-card); border: 1px solid var(--borde); border-radius: 7px;
+    padding: 6px 9px; font-size: 12.5px; color: var(--texto); font-family: inherit; outline: none;
+  }
+  .filtros-bar select:focus, .filtros-bar input:focus { border-color: var(--verde-claro); }
+  .filtros-bar select option { background: var(--fondo-card2); }
+  .filtros-count { margin-left: auto; align-self: center; font-size: 12px; color: var(--texto-suave); }
+
   .modal-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--borde);
@@ -1625,6 +1644,7 @@
         </div>
       </div>
       <div class="panel-full">
+        <div id="labores-filtros" class="filtros-bar" style="display:none"></div>
         <div class="panel-body" id="labores-lista"></div>
       </div>
     </div>
@@ -2999,7 +3019,7 @@
     {h:'ML', v:'ml'}, {h:'M3', v:'m3'}, {h:'Trabajador/Contratista', v:'trabajador'},
     {h:'Costo', v:'costo'}, {h:'Estado', v:l=>l.estado||'pendiente'}, {h:'Detalle', v:'detalle'}
   ];
-  function exportarLabores() { exportarCSV('labores', labores, COLS_CSV_LABORES); }
+  function exportarLabores() { exportarCSV('labores', filtrarLabores(labores), COLS_CSV_LABORES); }
   function exportarModulo(key) {
     const m = modulosActividad[key];
     const regs = labores.filter(l => actividadCategoria[l.actividad] === m.categoria);
@@ -3075,8 +3095,43 @@
     </tr>`;
   }
 
+  // ── FILTROS DE LABORES ──
+  let laboresFiltros = { actividad: '', lote: '', estado: '', desde: '', hasta: '' };
+  function filtrarLabores(lista) {
+    const f = laboresFiltros;
+    return lista.filter(l => {
+      if (f.actividad && l.actividad !== f.actividad) return false;
+      if (f.lote && String(l.lote == null ? '' : l.lote) !== f.lote) return false;
+      if (f.estado && (l.estado || 'pendiente') !== f.estado) return false;
+      if (f.desde && (l.fecha || '') < f.desde) return false;
+      if (f.hasta && (l.fecha || '') > f.hasta) return false;
+      return true;
+    });
+  }
+  function hayFiltrosLabores() { return Object.values(laboresFiltros).some(v => v); }
+  function setFiltroLabor(campo, val) { laboresFiltros[campo] = val; renderLabores(); }
+  function limpiarFiltrosLabores() { laboresFiltros = { actividad:'', lote:'', estado:'', desde:'', hasta:'' }; renderLabores(); }
+  function laboresFiltrosHTML() {
+    const f = laboresFiltros;
+    const acts = [...new Set(labores.map(l => l.actividad).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const ordLote = (x,y)=>{const nx=parseInt(x,10),ny=parseInt(y,10); if(isNaN(nx)&&isNaN(ny))return x.localeCompare(y); if(isNaN(nx))return 1; if(isNaN(ny))return -1; return nx-ny;};
+    const lotesSet = [...new Set(labores.map(l => (l.lote==null||l.lote==='')?'':String(l.lote)).filter(v=>v))].sort(ordLote);
+    const opt = (val, sel, txt) => '<option value="' + val + '" ' + (sel===val?'selected':'') + '>' + txt + '</option>';
+    const actOpts = opt('', f.actividad, 'Todas') + acts.map(a=>opt(a,f.actividad,a)).join('');
+    const loteOpts = opt('', f.lote, 'Todos') + lotesSet.map(l=>opt(l,f.lote,'Lote '+l)).join('');
+    const estOpts = [['','Todos'],['pendiente','Pendiente'],['aprobada','Aprobada'],['rechazada','Rechazada']].map(a=>opt(a[0],f.estado,a[1])).join('');
+    return '<div class="fb-item"><label>Actividad</label><select onchange="setFiltroLabor(\'actividad\',this.value)">' + actOpts + '</select></div>'
+      + '<div class="fb-item"><label>Lote</label><select onchange="setFiltroLabor(\'lote\',this.value)">' + loteOpts + '</select></div>'
+      + '<div class="fb-item"><label>Estado</label><select onchange="setFiltroLabor(\'estado\',this.value)">' + estOpts + '</select></div>'
+      + '<div class="fb-item"><label>Desde</label><input type="date" value="' + f.desde + '" onchange="setFiltroLabor(\'desde\',this.value)"></div>'
+      + '<div class="fb-item"><label>Hasta</label><input type="date" value="' + f.hasta + '" onchange="setFiltroLabor(\'hasta\',this.value)"></div>'
+      + (hayFiltrosLabores() ? '<button class="btn-cancel" style="padding:6px 12px; font-size:12px; align-self:flex-end" onclick="limpiarFiltrosLabores()">✕ Limpiar</button>' : '')
+      + '<span class="filtros-count" id="filtros-count"></span>';
+  }
+
   function renderLabores() {
     const container = document.getElementById('labores-lista');
+    const filtrosCont = document.getElementById('labores-filtros');
     const pendientes = labores.filter(l => (l.estado||'pendiente') === 'pendiente').length;
     const btn = (v, txt) => `<button class="btn-cancel" style="padding:2px 10px; font-size:11px; ${laboresVista===v?'border-color:var(--verde-claro); color:var(--verde-claro)':''}" onclick="setLaboresVista('${v}')">${txt}</button>`;
     const toggle = `<span style="display:inline-flex; gap:4px; margin-left:10px">${btn('lote','Por lote')}${btn('cronologico','Cronológico')}</span>`;
@@ -3085,6 +3140,7 @@
       : 'Vista consolidada de todas las actividades registradas';
 
     if (!labores.length) {
+      if (filtrosCont) filtrosCont.style.display = 'none';
       container.innerHTML = `<div style="padding:32px; text-align:center; color:var(--texto-dim)">
         <div style="font-size:40px; margin-bottom:12px">📋</div>
         <div style="font-size:14px; margin-bottom:6px">Sin registros aún</div>
@@ -3093,17 +3149,31 @@
       return;
     }
 
+    if (filtrosCont) { filtrosCont.style.display = 'flex'; filtrosCont.innerHTML = laboresFiltrosHTML(); }
+    const lista = filtrarLabores(labores);
+    const cntEl = document.getElementById('filtros-count');
+    if (cntEl) cntEl.textContent = lista.length === labores.length ? (labores.length + ' labores') : (lista.length + ' de ' + labores.length + ' labores');
+
+    if (!lista.length) {
+      container.innerHTML = `<div style="padding:32px; text-align:center; color:var(--texto-dim)">
+        <div style="font-size:34px; margin-bottom:10px">🔍</div>
+        <div style="font-size:14px; margin-bottom:6px">Ninguna labor coincide con los filtros</div>
+        <button class="btn-cancel" style="padding:4px 12px; font-size:12px; margin-top:6px" onclick="limpiarFiltrosLabores()">✕ Limpiar filtros</button>
+      </div>`;
+      return;
+    }
+
     const thead = `<thead><tr><th>Fecha</th><th>Actividad</th><th>Ubicación</th><th>Cantidad</th><th>Trabajador</th><th>Costo</th><th>Estado</th><th></th></tr></thead>`;
 
     if (laboresVista === 'cronologico') {
-      const ord = [...labores].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+      const ord = [...lista].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
       container.innerHTML = `<table class="lotes-table">${thead}<tbody>${ord.map(filaLaborHTML).join('')}</tbody></table>`;
       return;
     }
 
     // ── Agrupado por lote ──
     const grupos = {};
-    labores.forEach(l => {
+    lista.forEach(l => {
       const k = (l.lote==null || l.lote==='' || l.lote==='-') ? '—' : String(l.lote);
       (grupos[k] = grupos[k] || []).push(l);
     });
