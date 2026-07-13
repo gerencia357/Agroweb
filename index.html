@@ -1343,7 +1343,7 @@
         <div class="user-role">Administrador</div>
       </div>
     </div>
-    <div class="nav-label" style="font-size:10px; color:var(--texto-dim); text-align:center; margin-top:10px" id="build-badge-footer">v2026-07-13 · Mantenimiento fix</div>
+    <div class="nav-label" style="font-size:10px; color:var(--texto-dim); text-align:center; margin-top:10px" id="build-badge-footer">v2026-07-13 · Filtro trabajador</div>
   </div>
 </aside>
 
@@ -1369,7 +1369,7 @@
       <button class="btn-save" style="width:100%; padding:12px; font-size:14px" onclick="ingresar()">Ingresar</button>
     </div>
     <div style="text-align:center; margin-top:14px; font-size:11.5px; color:var(--texto-dim)">Demo: Santiago (Admin) PIN 1234 · José (Supervisor) 1111 · Ana (Báscula) 2222 · Carlos (Campo) 3333</div>
-    <div style="text-align:center; margin-top:10px; font-size:11px; color:var(--texto-dim)">Versión <b style="color:var(--verde-claro)" id="build-badge-login">2026-07-13 · Mantenimiento fix</b></div>
+    <div style="text-align:center; margin-top:10px; font-size:11px; color:var(--texto-dim)">Versión <b style="color:var(--verde-claro)" id="build-badge-login">2026-07-13 · Filtro trabajador</b></div>
   </div>
 </div>
 
@@ -3203,13 +3203,14 @@
   }
 
   // ── FILTROS DE LABORES ──
-  let laboresFiltros = { actividad: '', lote: '', estado: '', desde: '', hasta: '' };
+  let laboresFiltros = { actividad: '', lote: '', estado: '', trabajador: '', desde: '', hasta: '' };
   function filtrarLabores(lista) {
     const f = laboresFiltros;
     return lista.filter(l => {
       if (f.actividad && l.actividad !== f.actividad) return false;
       if (f.lote && String(l.lote == null ? '' : l.lote) !== f.lote) return false;
       if (f.estado && (l.estado || 'pendiente') !== f.estado) return false;
+      if (f.trabajador && (l.trabajador || '') !== f.trabajador) return false;
       if (f.desde && (l.fecha || '') < f.desde) return false;
       if (f.hasta && (l.fecha || '') > f.hasta) return false;
       return true;
@@ -3217,7 +3218,7 @@
   }
   function hayFiltrosLabores() { return Object.values(laboresFiltros).some(v => v); }
   function setFiltroLabor(campo, val) { laboresFiltros[campo] = val; renderLabores(); }
-  function limpiarFiltrosLabores() { laboresFiltros = { actividad:'', lote:'', estado:'', desde:'', hasta:'' }; renderLabores(); }
+  function limpiarFiltrosLabores() { laboresFiltros = { actividad:'', lote:'', estado:'', trabajador:'', desde:'', hasta:'' }; renderLabores(); }
   function laboresFiltrosHTML() {
     const f = laboresFiltros;
     const acts = [...new Set(labores.map(l => l.actividad).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -3227,9 +3228,12 @@
     const actOpts = opt('', f.actividad, 'Todas') + acts.map(a=>opt(a,f.actividad,a)).join('');
     const loteOpts = opt('', f.lote, 'Todos') + lotesSet.map(l=>opt(l,f.lote,'Lote '+l)).join('');
     const estOpts = [['','Todos'],['pendiente','Pendiente'],['aprobada','Aprobada'],['rechazada','Rechazada']].map(a=>opt(a[0],f.estado,a[1])).join('');
+    const trabs = [...new Set(labores.map(l => l.trabajador).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const trabOpts = opt('', f.trabajador, 'Todos') + trabs.map(t=>opt(t,f.trabajador,t)).join('');
     return '<div class="fb-item"><label>Actividad</label><select onchange="setFiltroLabor(\'actividad\',this.value)">' + actOpts + '</select></div>'
       + '<div class="fb-item"><label>Lote</label><select onchange="setFiltroLabor(\'lote\',this.value)">' + loteOpts + '</select></div>'
       + '<div class="fb-item"><label>Estado</label><select onchange="setFiltroLabor(\'estado\',this.value)">' + estOpts + '</select></div>'
+      + '<div class="fb-item"><label>Trabajador</label><select onchange="setFiltroLabor(\'trabajador\',this.value)">' + trabOpts + '</select></div>'
       + '<div class="fb-item"><label>Desde</label><input type="date" value="' + f.desde + '" onchange="setFiltroLabor(\'desde\',this.value)"></div>'
       + '<div class="fb-item"><label>Hasta</label><input type="date" value="' + f.hasta + '" onchange="setFiltroLabor(\'hasta\',this.value)"></div>'
       + (hayFiltrosLabores() ? '<button class="btn-cancel" style="padding:6px 12px; font-size:12px; align-self:flex-end" onclick="limpiarFiltrosLabores()">✕ Limpiar</button>' : '')
