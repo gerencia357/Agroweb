@@ -1341,6 +1341,9 @@
     <div class="nav-item" onclick="irMaestro('usuarios', this)" title="Usuarios y permisos">
       <span class="nav-icon">🔐</span> <span class="nav-label">Usuarios</span>
     </div>
+    <div class="nav-item" onclick="showPage('permisos', this)" title="Permisos por usuario">
+      <span class="nav-icon">🔑</span> <span class="nav-label">Permisos</span>
+    </div>
   </nav>
 
   <div class="sidebar-footer">
@@ -1727,6 +1730,23 @@
     </div>
 
     <!-- MAESTROS -->
+    <!-- PERMISOS -->
+    <div class="page" id="page-permisos">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">🔑 Permisos por usuario</div>
+          <div class="page-sub" id="permisos-sub">Controla a qué módulos entra cada usuario</div>
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--texto-suave); margin-bottom:12px; display:flex; gap:16px; flex-wrap:wrap">
+        <span>☑ marcado = tiene acceso</span>
+        <span><b style="color:var(--dorado-claro)">Admin</b> = acceso total</span>
+        <span><b style="color:var(--verde-claro)">Personalizado</b> = ajuste propio</span>
+        <span><b style="color:var(--texto-dim)">Hereda rol</b> = default del rol</span>
+      </div>
+      <div id="permisos-tabla"></div>
+    </div>
+
     <div class="page" id="page-maestros">
       <div class="page-header">
         <div>
@@ -2814,6 +2834,14 @@
     'Operador báscula':    { paginas: ['dashboard','bascula'], aprobar: false },
     'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','programacion'], aprobar: false }
   };
+  // Permisos efectivos de un usuario: override granular por usuario si existe, si no el default del rol.
+  function permisosEfectivos(nombre, rol) {
+    try {
+      const u = getMaestro('usuarios').find(x => x.nombre === nombre);
+      if (u && u.permisos && Array.isArray(u.permisos.paginas)) return u.permisos;
+    } catch (e) {}
+    return permisosPorRol[rol] || { paginas: [], aprobar: false };
+  }
   let sesion = JSON.parse(localStorage.getItem('agroweb_sesion') || 'null');
 
   // ── LABORES ─────────────────────────────────────────────
@@ -6098,7 +6126,7 @@
   }
 
   function sesionPuedeAprobar() {
-    return !sesion || (permisosPorRol[sesion.rol]?.aprobar === true);
+    return !sesion || (permisosEfectivos(sesion.nombre, sesion.rol).aprobar === true);
   }
 
   function mostrarLogin() {
@@ -6143,7 +6171,7 @@
 
   function aplicarPermisos() {
     if (!sesion) return;
-    const p = permisosPorRol[sesion.rol] || { paginas: [] };
+    const p = permisosEfectivos(sesion.nombre, sesion.rol);
 
     // Ocultar/mostrar items del nav según permisos
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -6804,7 +6832,94 @@
     input.value = '';
   }
 
+  // ═══ PERMISOS GRANULARES POR USUARIO ═════════════════════
+  const MODULOS_PERMISOS = [
+    { sec:'Principal', items:[['dashboard','Dashboard','📊'],['resumen','Resumen','📈'],['mapa','Mapa','🗺️'],['labores','Labores','📋']] },
+    { sec:'Campo', items:[['polinizacion','Polinización','🌸'],['mantenimiento','Mantenimiento','✂️'],['fertilizacion','Fertilización','🌱'],['preparacion','Preparación','🚜'],['sanidad','Sanidad','🔬'],['cosecha','Cosecha','🌴']] },
+    { sec:'Industria', items:[['bascula','Báscula','⚖️']] },
+    { sec:'Gestión', items:[['programacion','Programación','📅'],['presupuesto','Presupuesto','💰']] },
+    { sec:'Inteligencia', items:[['coroz','Coroz:IA','🤖']] },
+    { sec:'Configuración', items:[['lotes','Lotes','🏞️'],['maestros','Configuración','⚙️'],['formularios','Formularios','📝'],['permisos','Permisos','🔑']] }
+  ];
+  const MODULOS_FLAT = MODULOS_PERMISOS.reduce((a,g)=>a.concat(g.items.map(i=>i[0])),[]);
+
+  function renderPermisos() {
+    const cont = document.getElementById('permisos-tabla');
+    if (!cont) return;
+    const sub = document.getElementById('permisos-sub');
+    if (!(sesion && sesion.rol === 'Administrador')) {
+      cont.innerHTML = '<div style="padding:32px;text-align:center;color:var(--texto-dim)">🔒 Solo el Administrador puede gestionar permisos.</div>';
+      if (sub) sub.textContent = 'Acceso restringido';
+      return;
+    }
+    const usuarios = getMaestro('usuarios');
+    if (sub) sub.textContent = usuarios.length ? (usuarios.length + ' usuarios · marca los módulos a los que cada uno puede entrar') : 'Sin usuarios registrados';
+    if (!usuarios.length) { cont.innerHTML = '<div style="padding:32px;text-align:center;color:var(--texto-dim)">Agrega usuarios en Configuración → Usuarios</div>'; return; }
+
+    let head = '<tr><th style="text-align:left;position:sticky;left:0;background:var(--fondo-card);z-index:1">Usuario</th>';
+    MODULOS_PERMISOS.forEach(g => g.items.forEach(it => {
+      head += `<th title="${escHtml(it[1])}" style="text-align:center;white-space:nowrap"><div style="font-size:15px">${it[2]}</div><div style="font-size:9px;color:var(--texto-dim);font-weight:400">${escHtml(it[1])}</div></th>`;
+    }));
+    head += '<th style="text-align:center">✔ Aprobar</th><th style="text-align:center">Origen</th><th></th></tr>';
+
+    const rows = usuarios.map((u, ui) => {
+      const pe = permisosEfectivos(u.nombre, u.rol);
+      const all = pe.paginas === '*';
+      const custom = !!(u.permisos && Array.isArray(u.permisos.paginas));
+      let tds = `<td style="text-align:left;position:sticky;left:0;background:var(--fondo-card);z-index:1"><div style="font-weight:600;color:var(--verde-claro)">${escHtml(u.nombre)}</div><div style="font-size:11px;color:var(--texto-dim)">${escHtml(u.rol)}</div></td>`;
+      MODULOS_FLAT.forEach(id => {
+        const on = all || pe.paginas.indexOf(id) !== -1;
+        tds += `<td style="text-align:center"><input type="checkbox" ${on?'checked':''} ${all?'disabled':''} onchange="togglePermiso(${ui},'${id}',this.checked)"></td>`;
+      });
+      tds += `<td style="text-align:center"><input type="checkbox" ${pe.aprobar===true?'checked':''} ${all?'disabled':''} onchange="togglePermiso(${ui},'__aprobar',this.checked)"></td>`;
+      tds += `<td style="text-align:center;font-size:11px">${all?'<span style="color:var(--dorado-claro)">Admin</span>':(custom?'<span style="color:var(--verde-claro)">Personalizado</span>':'<span style="color:var(--texto-dim)">Hereda rol</span>')}</td>`;
+      tds += `<td style="text-align:center">${custom?`<button class="btn-icon" title="Restablecer al rol" onclick="resetPermiso(${ui})" style="width:26px;height:26px;font-size:13px">↺</button>`:''}</td>`;
+      return `<tr>${tds}</tr>`;
+    }).join('');
+
+    cont.innerHTML = `<div style="overflow-x:auto"><table class="lotes-table" style="min-width:100%"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function togglePermiso(ui, id, checked) {
+    const usuarios = getMaestro('usuarios');
+    const u = usuarios[ui];
+    if (!u) return;
+    if (u.rol === 'Administrador') { renderPermisos(); return; } // el admin siempre tiene acceso total
+    const pe = permisosEfectivos(u.nombre, u.rol);
+    let paginas = pe.paginas === '*' ? MODULOS_FLAT.slice() : pe.paginas.slice();
+    let aprobar = pe.aprobar === true;
+    if (id === '__aprobar') aprobar = checked;
+    else if (checked) { if (paginas.indexOf(id) === -1) paginas.push(id); }
+    else paginas = paginas.filter(x => x !== id);
+    u.permisos = { paginas, aprobar };
+    setMaestro('usuarios', usuarios);
+    renderPermisos();
+    if (sesion && sesion.nombre === u.nombre) aplicarPermisos();
+    toast('Permisos actualizados', 'success');
+  }
+
+  function resetPermiso(ui) {
+    const usuarios = getMaestro('usuarios');
+    const u = usuarios[ui];
+    if (!u) return;
+    delete u.permisos;
+    setMaestro('usuarios', usuarios);
+    renderPermisos();
+    if (sesion && sesion.nombre === u.nombre) aplicarPermisos();
+    toast('Permisos restablecidos al rol', 'info');
+  }
+
   function showPage(id, el) {
+    // Control de acceso por usuario (además de ocultar el nav): bloquea acceso directo.
+    if (sesion && typeof permisosEfectivos === 'function') {
+      const _pe = permisosEfectivos(sesion.nombre, sesion.rol);
+      const _permit = _pe.paginas === '*' || (Array.isArray(_pe.paginas) && _pe.paginas.indexOf(id) !== -1);
+      if (!_permit && document.getElementById('page-' + id)) {
+        if (typeof toast === 'function') toast('No tienes acceso a este módulo', 'error');
+        id = (_pe.paginas === '*') ? 'dashboard' : (_pe.paginas[0] || 'dashboard');
+        el = null;
+      }
+    }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id).classList.add('active');
@@ -6834,6 +6949,7 @@
     if (id === 'coroz' && typeof actualizarEstadoClaveCoroz === 'function') actualizarEstadoClaveCoroz();
     if (id === 'mapa' && typeof renderMapa === 'function') renderMapa();
     if (id === 'programacion' && typeof renderProgramacion === 'function') renderProgramacion();
+    if (id === 'permisos' && typeof renderPermisos === 'function') renderPermisos();
   }
 
   function setMsg(text) {
@@ -6967,7 +7083,7 @@ ${corozContexto()}`;
   // Versión del seed de datos. Al subirla, los navegadores que ya tienen
   // datos de una versión anterior recargan automáticamente los datos reales.
   const DATA_VERSION = '2026-07-13-programacion';
-  const BUILD = '2026-07-14 · Hardening'; // versión visible del build (una sola fuente para las etiquetas)
+  const BUILD = '2026-07-14 · Permisos'; // versión visible del build (una sola fuente para las etiquetas)
   const versionGuardada = localStorage.getItem('agroweb_data_version');
   if (!lotes.length && !labores.length && !pesajes.length) {
     // Primera vez: cargar los datos
