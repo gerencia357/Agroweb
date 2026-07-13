@@ -2834,13 +2834,34 @@
     'Operador báscula':    { paginas: ['dashboard','bascula'], aprobar: false },
     'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','programacion'], aprobar: false }
   };
+  // Acciones (capacidades) por rol: 'editar' (crear/registrar/modificar) y 'eliminar'. 'aprobar' va aparte.
+  const accionesPorRol = {
+    'Administrador':       ['editar','eliminar'],
+    'Supervisor':          ['editar','eliminar'],
+    'Operador báscula':    ['editar'],
+    'Trabajador de campo': ['editar']
+  };
   // Permisos efectivos de un usuario: override granular por usuario si existe, si no el default del rol.
   function permisosEfectivos(nombre, rol) {
+    const base = permisosPorRol[rol] || { paginas: [], aprobar: false };
+    let eff = { paginas: base.paginas, aprobar: base.aprobar, acciones: (accionesPorRol[rol] || []).slice() };
     try {
       const u = getMaestro('usuarios').find(x => x.nombre === nombre);
-      if (u && u.permisos && Array.isArray(u.permisos.paginas)) return u.permisos;
+      if (u && u.permisos) {
+        const p = u.permisos;
+        if (Array.isArray(p.paginas)) eff.paginas = p.paginas;
+        if (typeof p.aprobar === 'boolean') eff.aprobar = p.aprobar;
+        if (Array.isArray(p.acciones)) eff.acciones = p.acciones;
+      }
     } catch (e) {}
-    return permisosPorRol[rol] || { paginas: [], aprobar: false };
+    return eff;
+  }
+  // ¿La sesión puede realizar una acción? accion: 'editar' | 'eliminar' | 'aprobar'
+  function puedeAccion(accion) {
+    if (!sesion) return true; // arranque / sin sesión: no bloquear
+    const pe = permisosEfectivos(sesion.nombre, sesion.rol);
+    if (accion === 'aprobar') return pe.aprobar === true;
+    return Array.isArray(pe.acciones) && pe.acciones.indexOf(accion) !== -1;
   }
   let sesion = JSON.parse(localStorage.getItem('agroweb_sesion') || 'null');
 
@@ -3015,6 +3036,7 @@
   function cerrarModalLabor() { document.getElementById('modal-labor').classList.remove('open'); }
 
   function guardarLabor() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const lineaR = parseRango(document.getElementById('labor-linea').value);
     const palmaR = parseRango(document.getElementById('labor-palma').value);
 
@@ -3043,16 +3065,19 @@
 
   // ── APROBACIONES ────────────────────────────────────────
   function aprobarLabor(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('aprobar')) { toast('No tienes permiso para aprobar', 'error'); return; }
     const l = labores.find(x => x.id === id);
     if (l) { l.estado = 'aprobada'; saveLabores(); refrescarModulosLabores(); }
   }
 
   function rechazarLabor(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('aprobar')) { toast('No tienes permiso para aprobar', 'error'); return; }
     const l = labores.find(x => x.id === id);
     if (l) { l.estado = 'rechazada'; saveLabores(); refrescarModulosLabores(); }
   }
 
   function aprobarTodasPendientes() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('aprobar')) { toast('No tienes permiso para aprobar', 'error'); return; }
     const pendientes = labores.filter(l => (l.estado||'pendiente') === 'pendiente');
     if (!pendientes.length) { alert('No hay labores pendientes'); return; }
     if (!confirm(`¿Aprobar ${pendientes.length} labores pendientes?`)) return;
@@ -3076,6 +3101,7 @@
   const laboresAprobadas = () => labores.filter(l => (l.estado||'pendiente') === 'aprobada');
 
   function eliminarLabor(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este registro de labor?')) return;
     labores = labores.filter(x => x.id !== id);
     saveLabores();
@@ -3596,6 +3622,7 @@
   }
 
   function guardarTarea() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const act = document.getElementById('tarea-actividad').value;
     const cant = parseFloat(document.getElementById('tarea-cantidad').value) || 0;
     const fecha = document.getElementById('tarea-fecha').value;
@@ -3630,6 +3657,7 @@
   }
 
   function cambiarEstadoTarea(id, nuevo) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const t = tareas.find(x => x.id === id);
     if (!t) return;
     t.estado = nuevo;
@@ -3639,6 +3667,7 @@
   }
 
   function completarTarea(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const t = tareas.find(x => x.id === id);
     if (!t) return;
     if (t.estado === 'completada') { alert('Esta tarea ya fue completada'); return; }
@@ -3668,6 +3697,7 @@
   }
 
   function eliminarTarea(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar esta tarea programada?')) return;
     tareas = tareas.filter(x => x.id !== id);
     saveTareas();
@@ -3709,6 +3739,7 @@
   function cerrarModalPpto() { document.getElementById('modal-ppto').classList.remove('open'); }
 
   function guardarPpto() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const valor = parseFloat(document.getElementById('ppto-valor').value) || 0;
     const meta = parseInt(document.getElementById('ppto-meta').value) || 0;
     if (!valor && !meta) { alert('Ingresa el presupuesto en dinero, la meta de actividades, o ambos'); return; }
@@ -3728,6 +3759,7 @@
   }
 
   function eliminarPpto(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar esta partida presupuestal?')) return;
     presupuestos = presupuestos.filter(x => x.id !== id);
     savePpto();
@@ -3930,6 +3962,7 @@
   function cerrarModalPesaje() { document.getElementById('modal-pesaje').classList.remove('open'); }
 
   function guardarPesaje() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const placa = document.getElementById('pesaje-placa').value.trim().toUpperCase();
     const bruto = parseFloat(document.getElementById('pesaje-bruto').value) || 0;
     if (!placa) { alert('Ingresa la placa del vehículo'); return; }
@@ -3968,6 +4001,7 @@
   }
 
   function eliminarPesaje(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este tiquete de báscula?')) return;
     pesajes = pesajes.filter(x => x.id !== id);
     savePesajes();
@@ -4234,6 +4268,7 @@
   function cerrarModalMaestro() { document.getElementById('modal-maestro').classList.remove('open'); }
 
   function guardarMaestro() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const def = maestrosDef[maestroActivo];
     const id = document.getElementById('maestro-edit-id').value;
     const reg = { id: id || Date.now().toString() };
@@ -4258,6 +4293,7 @@
   }
 
   function eliminarMaestro(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este registro?')) return;
     setMaestro(maestroActivo, getMaestro(maestroActivo).filter(x => x.id !== id));
     renderMaestrosTabs();
@@ -4373,6 +4409,7 @@
   }
 
   function guardarFormulario() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const nombre = document.getElementById('fb-nombre').value.trim();
     if (!nombre) { alert('Ponle nombre al formulario'); return; }
 
@@ -4404,6 +4441,7 @@
   }
 
   function eliminarFormulario(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este formulario y sus respuestas?')) return;
     customForms = customForms.filter(x => x.id !== id);
     formResp = formResp.filter(r => r.formId !== id);
@@ -4482,6 +4520,7 @@
   function cerrarFill() { document.getElementById('modal-fill').classList.remove('open'); }
 
   function guardarRespuesta() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const f = customForms.find(x => x.id === fillFormId);
     if (!f) return;
     const valores = {};
@@ -5737,6 +5776,7 @@
   }
 
   function registrarNFC(origen = 'Registro simulado') {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     if (!nfcActividad) { alert('Selecciona una actividad'); return; }
     const trabajador = document.getElementById('nfc-trabajador').value;
     const lote = document.getElementById('nfc-lote').value;
@@ -5877,6 +5917,7 @@
   function cerrarModalDeteccion() { document.getElementById('modal-deteccion').classList.remove('open'); }
 
   function guardarDeteccion() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const enfermedad = document.getElementById('det-enfermedad').value;
     const lote = document.getElementById('det-lote').value;
     const linea = parseInt(document.getElementById('det-linea').value);
@@ -5910,6 +5951,7 @@
   }
 
   function cambiarEstadoDeteccion(id, nuevoEstado) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const det = detecciones.find(d => d.id === id);
     if (!det) return;
     det.estado = nuevoEstado;
@@ -5919,6 +5961,7 @@
   }
 
   function eliminarDeteccion(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este caso?')) return;
     detecciones = detecciones.filter(d => d.id !== id);
     saveDet(); renderDetecciones();
@@ -6019,6 +6062,7 @@
   function cerrarModalCenso() { document.getElementById('modal-censo').classList.remove('open'); }
 
   function guardarCenso() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const lote = document.getElementById('cen-lote').value;
     if (!lote) { alert('Selecciona el lote'); return; }
     const lineaR = parseRango(document.getElementById('cen-linea').value);
@@ -6038,6 +6082,7 @@
   }
 
   function eliminarCenso(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este censo?')) return;
     censosProduccion = censosProduccion.filter(c => c.id !== id);
     saveCensos();
@@ -6474,6 +6519,7 @@
   }
 
   function guardarLote() {
+    if (typeof puedeAccion === 'function' && !puedeAccion('editar')) { toast('No tienes permiso para modificar datos', 'error'); return; }
     const numero = parseInt(document.getElementById('lote-numero').value);
     if (!numero) { alert('Ingresa el número del lote'); return; }
 
@@ -6514,6 +6560,7 @@
   }
 
   function eliminarLote(id) {
+    if (typeof puedeAccion === 'function' && !puedeAccion('eliminar')) { toast('No tienes permiso para eliminar', 'error'); return; }
     if (!confirm('¿Eliminar este lote? Esta acción no se puede deshacer.')) return;
     lotes = lotes.filter(x => x.id !== id);
     saveLotes();
@@ -6860,7 +6907,7 @@
     MODULOS_PERMISOS.forEach(g => g.items.forEach(it => {
       head += `<th title="${escHtml(it[1])}" style="text-align:center;white-space:nowrap"><div style="font-size:15px">${it[2]}</div><div style="font-size:9px;color:var(--texto-dim);font-weight:400">${escHtml(it[1])}</div></th>`;
     }));
-    head += '<th style="text-align:center">✔ Aprobar</th><th style="text-align:center">Origen</th><th></th></tr>';
+    head += '<th style="text-align:center">✎ Editar</th><th style="text-align:center">🗑 Eliminar</th><th style="text-align:center">✔ Aprobar</th><th style="text-align:center">Origen</th><th></th></tr>';
 
     const rows = usuarios.map((u, ui) => {
       const pe = permisosEfectivos(u.nombre, u.rol);
@@ -6871,7 +6918,9 @@
         const on = all || pe.paginas.indexOf(id) !== -1;
         tds += `<td style="text-align:center"><input type="checkbox" ${on?'checked':''} ${all?'disabled':''} onchange="togglePermiso(${ui},'${id}',this.checked)"></td>`;
       });
-      tds += `<td style="text-align:center"><input type="checkbox" ${pe.aprobar===true?'checked':''} ${all?'disabled':''} onchange="togglePermiso(${ui},'__aprobar',this.checked)"></td>`;
+      const _cap = (on, key) => `<td style="text-align:center"><input type="checkbox" ${on?'checked':''} ${all?'disabled':''} onchange="togglePermiso(${ui},'${key}',this.checked)"></td>`;
+      const _acc = Array.isArray(pe.acciones) ? pe.acciones : [];
+      tds += _cap(all || _acc.indexOf('editar')!==-1, '__editar') + _cap(all || _acc.indexOf('eliminar')!==-1, '__eliminar') + _cap(pe.aprobar===true, '__aprobar');
       tds += `<td style="text-align:center;font-size:11px">${all?'<span style="color:var(--dorado-claro)">Admin</span>':(custom?'<span style="color:var(--verde-claro)">Personalizado</span>':'<span style="color:var(--texto-dim)">Hereda rol</span>')}</td>`;
       tds += `<td style="text-align:center">${custom?`<button class="btn-icon" title="Restablecer al rol" onclick="resetPermiso(${ui})" style="width:26px;height:26px;font-size:13px">↺</button>`:''}</td>`;
       return `<tr>${tds}</tr>`;
@@ -6888,10 +6937,16 @@
     const pe = permisosEfectivos(u.nombre, u.rol);
     let paginas = pe.paginas === '*' ? MODULOS_FLAT.slice() : pe.paginas.slice();
     let aprobar = pe.aprobar === true;
+    let acciones = Array.isArray(pe.acciones) ? pe.acciones.slice() : [];
     if (id === '__aprobar') aprobar = checked;
+    else if (id === '__editar' || id === '__eliminar') {
+      const a = id.slice(2);
+      if (checked) { if (acciones.indexOf(a) === -1) acciones.push(a); }
+      else acciones = acciones.filter(x => x !== a);
+    }
     else if (checked) { if (paginas.indexOf(id) === -1) paginas.push(id); }
     else paginas = paginas.filter(x => x !== id);
-    u.permisos = { paginas, aprobar };
+    u.permisos = { paginas, aprobar, acciones };
     setMaestro('usuarios', usuarios);
     renderPermisos();
     if (sesion && sesion.nombre === u.nombre) aplicarPermisos();
@@ -7083,7 +7138,7 @@ ${corozContexto()}`;
   // Versión del seed de datos. Al subirla, los navegadores que ya tienen
   // datos de una versión anterior recargan automáticamente los datos reales.
   const DATA_VERSION = '2026-07-13-programacion';
-  const BUILD = '2026-07-14 · Permisos'; // versión visible del build (una sola fuente para las etiquetas)
+  const BUILD = '2026-07-14 · Permisos por acción'; // versión visible del build (una sola fuente para las etiquetas)
   const versionGuardada = localStorage.getItem('agroweb_data_version');
   if (!lotes.length && !labores.length && !pesajes.length) {
     // Primera vez: cargar los datos
