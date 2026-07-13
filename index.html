@@ -1293,6 +1293,9 @@
     </div>
 
     <div class="nav-section">Gestión</div>
+    <div class="nav-item" onclick="showPage('programacion', this)" title="Programación de actividades">
+      <span class="nav-icon">📅</span> <span class="nav-label">Programación</span>
+    </div>
     <div class="nav-item" onclick="showPage('presupuesto', this)" title="Presupuesto">
       <span class="nav-icon">💰</span> <span class="nav-label">Presupuesto</span>
     </div>
@@ -1744,10 +1747,14 @@
         </div>
       </div>
 
-      <div class="lotes-resumen">
+      <div class="lotes-resumen" style="grid-template-columns:repeat(5,1fr)">
         <div class="resumen-chip">
           <div class="resumen-val" id="ppto-total">$0</div>
           <div class="resumen-label">Presupuestado</div>
+        </div>
+        <div class="resumen-chip">
+          <div class="resumen-val" id="ppto-comprometido" style="color:var(--naranja)">$0</div>
+          <div class="resumen-label">Comprometido</div>
         </div>
         <div class="resumen-chip">
           <div class="resumen-val" id="ppto-ejecutado" style="color:var(--dorado-claro)">$0</div>
@@ -1764,6 +1771,33 @@
       </div>
 
       <div id="ppto-lista"></div>
+    </div>
+
+    <!-- PROGRAMACIÓN / ASIGNACIÓN DE TAREAS -->
+    <div class="page" id="page-programacion">
+      <div class="page-header">
+        <div>
+          <div class="page-heading">Programación de actividades</div>
+          <div class="page-sub" id="prog-sub">Asigna y programa tareas por empleado — ligadas al presupuesto</div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button class="btn-cancel" style="margin-top:0" onclick="exportarTareas()">⬇ Excel</button>
+          <button class="btn-cancel" style="margin-top:0" onclick="imprimirElemento('programacion-lista','Programación de actividades')">🖨️</button>
+          <button class="btn-primary" style="margin-top:0" id="prog-btn-nueva" onclick="abrirModalTarea()">+ Nueva tarea</button>
+        </div>
+      </div>
+
+      <div class="lotes-resumen" style="grid-template-columns:repeat(4,1fr)">
+        <div class="resumen-chip"><div class="resumen-val" id="prog-k-prog">0</div><div class="resumen-label">Programadas</div></div>
+        <div class="resumen-chip"><div class="resumen-val" id="prog-k-curso" style="color:var(--naranja)">0</div><div class="resumen-label">En progreso</div></div>
+        <div class="resumen-chip"><div class="resumen-val" id="prog-k-comp" style="color:var(--verde-claro)">0</div><div class="resumen-label">Completadas (mes)</div></div>
+        <div class="resumen-chip"><div class="resumen-val" id="prog-k-costo" style="color:var(--dorado-claro)">$0</div><div class="resumen-label">Comprometido (mes)</div></div>
+      </div>
+
+      <div id="prog-filtros" class="filtros-bar" style="display:none"></div>
+      <div class="panel-full">
+        <div class="panel-body" id="programacion-lista"></div>
+      </div>
     </div>
 
     <!-- PÁGINAS DE ACTIVIDAD (generadas dinámicamente) -->
@@ -2199,6 +2233,75 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModalPpto()">Cancelar</button>
       <button class="btn-save" onclick="guardarPpto()">Guardar partida</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAREA (Programación) -->
+<div class="modal-overlay" id="modal-tarea">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-tarea-title">Nueva tarea</div>
+      <button class="modal-close" onclick="cerrarModalTarea()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tarea-edit-id">
+      <div class="form-row">
+        <div class="field">
+          <label>Actividad</label>
+          <select id="tarea-actividad" onchange="autoCalcularCostoTarea()"></select>
+        </div>
+        <div class="field">
+          <label>Empleado asignado</label>
+          <select id="tarea-empleado" onchange="autoCalcularCostoTarea()"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Lote</label>
+          <select id="tarea-lote"></select>
+        </div>
+        <div class="field">
+          <label>Cantidad meta (<span id="tarea-unidad">und</span>)</label>
+          <input type="number" id="tarea-cantidad" min="0" placeholder="Ej: 1200" oninput="autoCalcularCostoTarea()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Fecha programada</label>
+          <input type="date" id="tarea-fecha" onchange="autoCalcularCostoTarea()">
+        </div>
+        <div class="field">
+          <label>Fecha fin (opcional)</label>
+          <input type="date" id="tarea-fechafin">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Costo estimado (COP)</label>
+          <input type="number" id="tarea-costo" min="0" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="tarea-estado">
+            <option value="programada">Programada</option>
+            <option value="en_progreso">En progreso</option>
+            <option value="completada">Completada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--texto-suave); margin-top:-4px" id="tarea-hint"></div>
+      <div class="form-row full">
+        <div class="field">
+          <label>Notas</label>
+          <textarea id="tarea-notas" placeholder="Detalle de la tarea..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalTarea()">Cancelar</button>
+      <button class="btn-save" onclick="guardarTarea()">Guardar tarea</button>
     </div>
   </div>
 </div>
@@ -2688,15 +2791,17 @@
   // ── SESIÓN Y PERMISOS (declarados primero: se usan en todos los renders) ──
   const permisosPorRol = {
     'Administrador':       { paginas: '*', aprobar: true },
-    'Supervisor':          { paginas: ['dashboard','resumen','mapa','labores','polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
+    'Supervisor':          { paginas: ['dashboard','resumen','mapa','labores','programacion','polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','bascula','presupuesto','coroz'], aprobar: true },
     'Operador báscula':    { paginas: ['dashboard','bascula'], aprobar: false },
-    'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha'], aprobar: false }
+    'Trabajador de campo': { paginas: ['polinizacion','mantenimiento','fertilizacion','preparacion','sanidad','cosecha','programacion'], aprobar: false }
   };
   let sesion = JSON.parse(localStorage.getItem('agroweb_sesion') || 'null');
 
   // ── LABORES ─────────────────────────────────────────────
   let labores = JSON.parse(localStorage.getItem('agroweb_labores') || '[]');
   let lotes = JSON.parse(localStorage.getItem('agroweb_lotes') || '[]'); // declarado temprano: renderLabores lo usa al agrupar por lote
+  let tareas = JSON.parse(localStorage.getItem('agroweb_tareas') || '[]'); // tareas programadas / asignaciones
+  function saveTareas() { localStorage.setItem('agroweb_tareas', JSON.stringify(tareas)); }
 
   // Mapeo actividad de labor → categoría de presupuesto (consulta el catálogo maestro primero)
   const actividadCategoriaBase = {
@@ -3199,6 +3304,317 @@
     }).join('');
   }
 
+  // ═══ PROGRAMACIÓN / ASIGNACIÓN DE TAREAS ═════════════════
+  let progVista = 'empleado'; // 'empleado' | 'semana' | 'lote'
+  let tareasFiltros = { empleado: '', actividad: '', lote: '', estado: '', desde: '', hasta: '' };
+
+  const ESTADOS_TAREA = {
+    programada:  { txt: 'Programada',  badge: 'badge-dorado',  ic: '📅' },
+    en_progreso: { txt: 'En progreso', badge: 'badge-naranja', ic: '▶' },
+    completada:  { txt: 'Completada',  badge: 'badge-verde',   ic: '✓' },
+    cancelada:   { txt: 'Cancelada',   badge: 'badge-rojo',    ic: '✕' }
+  };
+
+  function unidadDeActividad(act) {
+    const cat = getMaestro('labores_cat').find(c => c.nombre === act);
+    return cat ? (cat.unidad || 'und') : 'und';
+  }
+  function costoUnitActividad(act, fecha, empleado) {
+    const t = tarifaVigente(act, fecha, empleado);
+    if (t && t.valor) return t.valor;
+    const cat = getMaestro('labores_cat').find(c => c.nombre === act);
+    return cat ? (cat.costo || 0) : 0;
+  }
+  function progPuedeEditar() { return typeof sesionPuedeAprobar !== 'function' ? true : sesionPuedeAprobar(); }
+  function fmtFechaCorta(fstr) {
+    if (!fstr) return '—';
+    try { return new Date(fstr + 'T12:00:00').toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }); }
+    catch (e) { return fstr; }
+  }
+
+  // Base visible segun rol: admin/supervisor ven todo; trabajador solo lo suyo
+  function tareasVisibles() {
+    if (progPuedeEditar()) return tareas;
+    const yo = sesion && sesion.trabajador ? sesion.trabajador : null;
+    return yo ? tareas.filter(t => t.empleado === yo) : tareas;
+  }
+  function filtrarTareas(lista) {
+    const f = tareasFiltros;
+    return lista.filter(t => {
+      if (f.empleado && t.empleado !== f.empleado) return false;
+      if (f.actividad && t.actividad !== f.actividad) return false;
+      if (f.lote && String(t.lote == null ? '' : t.lote) !== f.lote) return false;
+      if (f.estado && t.estado !== f.estado) return false;
+      if (f.desde && (t.fechaProg || '') < f.desde) return false;
+      if (f.hasta && (t.fechaProg || '') > f.hasta) return false;
+      return true;
+    });
+  }
+  function hayFiltrosTareas() { return Object.values(tareasFiltros).some(v => v); }
+  function setFiltroTarea(campo, val) { tareasFiltros[campo] = val; renderProgramacion(); }
+  function limpiarFiltrosTareas() { tareasFiltros = { empleado:'', actividad:'', lote:'', estado:'', desde:'', hasta:'' }; renderProgramacion(); }
+  function setProgVista(v) { progVista = v; renderProgramacion(); }
+
+  function tareasFiltrosHTML() {
+    const f = tareasFiltros;
+    const base = tareasVisibles();
+    const emps = [...new Set(base.map(t => t.empleado).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const acts = [...new Set(base.map(t => t.actividad).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const ordLote = (x,y)=>{const nx=parseInt(x,10),ny=parseInt(y,10); if(isNaN(nx)&&isNaN(ny))return x.localeCompare(y); if(isNaN(nx))return 1; if(isNaN(ny))return -1; return nx-ny;};
+    const lotesSet = [...new Set(base.map(t => (t.lote==null||t.lote==='')?'':String(t.lote)).filter(v=>v))].sort(ordLote);
+    const opt = (val, sel, txt) => '<option value="' + val + '" ' + (sel===val?'selected':'') + '>' + txt + '</option>';
+    const empOpts = opt('', f.empleado, 'Todos') + emps.map(a=>opt(a,f.empleado,a)).join('');
+    const actOpts = opt('', f.actividad, 'Todas') + acts.map(a=>opt(a,f.actividad,a)).join('');
+    const loteOpts = opt('', f.lote, 'Todos') + lotesSet.map(l=>opt(l,f.lote,'Lote '+l)).join('');
+    const estOpts = [['','Todos'],['programada','Programada'],['en_progreso','En progreso'],['completada','Completada'],['cancelada','Cancelada']].map(a=>opt(a[0],f.estado,a[1])).join('');
+    return '<div class="fb-item"><label>Empleado</label><select onchange="setFiltroTarea(\'empleado\',this.value)">' + empOpts + '</select></div>'
+      + '<div class="fb-item"><label>Actividad</label><select onchange="setFiltroTarea(\'actividad\',this.value)">' + actOpts + '</select></div>'
+      + '<div class="fb-item"><label>Lote</label><select onchange="setFiltroTarea(\'lote\',this.value)">' + loteOpts + '</select></div>'
+      + '<div class="fb-item"><label>Estado</label><select onchange="setFiltroTarea(\'estado\',this.value)">' + estOpts + '</select></div>'
+      + '<div class="fb-item"><label>Desde</label><input type="date" value="' + f.desde + '" onchange="setFiltroTarea(\'desde\',this.value)"></div>'
+      + '<div class="fb-item"><label>Hasta</label><input type="date" value="' + f.hasta + '" onchange="setFiltroTarea(\'hasta\',this.value)"></div>'
+      + (hayFiltrosTareas() ? '<button class="btn-cancel" style="padding:6px 12px; font-size:12px; align-self:flex-end" onclick="limpiarFiltrosTareas()">✕ Limpiar</button>' : '')
+      + '<span class="filtros-count" id="prog-filtros-count"></span>';
+  }
+
+  function filaTareaHTML(t) {
+    const est = ESTADOS_TAREA[t.estado] || ESTADOS_TAREA.programada;
+    const fechas = (t.fechaFin && t.fechaFin !== t.fechaProg)
+      ? (fmtFechaCorta(t.fechaProg) + ' → ' + fmtFechaCorta(t.fechaFin))
+      : fmtFechaCorta(t.fechaProg);
+    const meta = (t.cantidadMeta ? t.cantidadMeta.toLocaleString('es-CO') : '—') + ' ' + (t.unidad || '');
+    let acc = '';
+    if (progPuedeEditar()) {
+      const b = [];
+      if (t.estado === 'programada') b.push('<button class="btn-icon" title="Iniciar" onclick="cambiarEstadoTarea(\'' + t.id + '\',\'en_progreso\')" style="width:24px;height:24px;font-size:11px">▶</button>');
+      if (t.estado === 'programada' || t.estado === 'en_progreso') b.push('<button class="btn-icon" title="Completar → crea labor" onclick="completarTarea(\'' + t.id + '\')" style="width:24px;height:24px;font-size:11px;border-color:var(--verde-claro);color:var(--verde-claro)">✓</button>');
+      b.push('<button class="btn-icon" title="Editar" onclick="abrirModalTarea(\'' + t.id + '\')" style="width:24px;height:24px;font-size:11px">✎</button>');
+      b.push('<button class="btn-icon" title="Eliminar" onclick="eliminarTarea(\'' + t.id + '\')" style="width:24px;height:24px;font-size:11px">🗑️</button>');
+      acc = b.join(' ');
+    }
+    const op = (t.estado === 'cancelada') ? 'opacity:0.5' : '';
+    return '<tr style="' + op + '">'
+      + '<td style="white-space:nowrap">' + fechas + '</td>'
+      + '<td style="color:var(--verde-claro); font-weight:500">' + (catIcono[actividadCategoria[t.actividad]]||'📌') + ' ' + t.actividad + (t.notas ? '<div style="font-weight:400; font-size:11px; color:var(--texto-dim); margin-top:2px">' + t.notas + '</div>' : '') + '</td>'
+      + '<td style="font-family:monospace; font-size:12px">' + (t.lote ? 'Lote ' + t.lote : '—') + '</td>'
+      + '<td>' + meta + '</td>'
+      + '<td>' + (t.costoEst ? fmtCOP(t.costoEst) : '—') + '</td>'
+      + '<td style="white-space:nowrap"><span class="badge ' + est.badge + '">' + est.ic + ' ' + est.txt + '</span></td>'
+      + '<td style="white-space:nowrap">' + acc + '</td></tr>';
+  }
+
+  function renderProgramacion() {
+    const container = document.getElementById('programacion-lista');
+    if (!container) return;
+    const filtrosCont = document.getElementById('prog-filtros');
+    const base = tareasVisibles();
+    const puede = progPuedeEditar();
+    const btnNueva = document.getElementById('prog-btn-nueva');
+    if (btnNueva) btnNueva.style.display = puede ? '' : 'none';
+
+    // KPIs
+    const mes = new Date().toISOString().slice(0,7);
+    const nProg = base.filter(t => t.estado === 'programada').length;
+    const nCurso = base.filter(t => t.estado === 'en_progreso').length;
+    const nComp = base.filter(t => t.estado === 'completada' && (t.fechaProg||'').slice(0,7) === mes).length;
+    const aprobIds = new Set(laboresAprobadas().map(l => l.id));
+    const costoComp = base.filter(t => t.estado !== 'cancelada' && (t.fechaProg||'').slice(0,7) === mes && !(t.laborId && aprobIds.has(t.laborId)))
+      .reduce((sm,t) => sm + (t.costoEst || 0), 0);
+    const setK = (id,val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    setK('prog-k-prog', nProg); setK('prog-k-curso', nCurso); setK('prog-k-comp', nComp); setK('prog-k-costo', fmtCOP(costoComp));
+
+    // Sub + toggle
+    const btn = (v, txt) => '<button class="btn-cancel" style="padding:2px 10px; font-size:11px; ' + (progVista===v?'border-color:var(--verde-claro); color:var(--verde-claro)':'') + '" onclick="setProgVista(\'' + v + '\')">' + txt + '</button>';
+    const toggle = '<span style="display:inline-flex; gap:4px; margin-left:10px">' + btn('empleado','Por empleado') + btn('semana','Por semana') + btn('lote','Por lote') + '</span>';
+    const sub = document.getElementById('prog-sub');
+    if (sub) sub.innerHTML = base.length ? (base.length + ' tareas' + (puede ? '' : ' (solo las tuyas)') + toggle) : 'Asigna y programa tareas por empleado — ligadas al presupuesto';
+
+    if (!base.length) {
+      if (filtrosCont) filtrosCont.style.display = 'none';
+      container.innerHTML = '<div style="padding:32px; text-align:center; color:var(--texto-dim)">'
+        + '<div style="font-size:40px; margin-bottom:12px">📅</div>'
+        + '<div style="font-size:14px; margin-bottom:6px">Sin tareas programadas</div>'
+        + '<div style="font-size:12px">Crea una tarea para asignarle trabajo a un empleado — se suma como comprometido al presupuesto</div></div>';
+      return;
+    }
+
+    if (filtrosCont) { filtrosCont.style.display = 'flex'; filtrosCont.innerHTML = tareasFiltrosHTML(); }
+    const lista = filtrarTareas(base);
+    const cntEl = document.getElementById('prog-filtros-count');
+    if (cntEl) cntEl.textContent = lista.length === base.length ? (base.length + ' tareas') : (lista.length + ' de ' + base.length + ' tareas');
+
+    if (!lista.length) {
+      container.innerHTML = '<div style="padding:32px; text-align:center; color:var(--texto-dim)">'
+        + '<div style="font-size:34px; margin-bottom:10px">🔍</div>'
+        + '<div style="font-size:14px; margin-bottom:6px">Ninguna tarea coincide con los filtros</div>'
+        + '<button class="btn-cancel" style="padding:4px 12px; font-size:12px; margin-top:6px" onclick="limpiarFiltrosTareas()">✕ Limpiar filtros</button></div>';
+      return;
+    }
+
+    const thead = '<thead><tr><th>Fecha</th><th>Actividad</th><th>Lote</th><th>Meta</th><th>Costo est.</th><th>Estado</th><th></th></tr></thead>';
+
+    // Agrupacion
+    const grupos = {};
+    const claveDe = (t) => {
+      if (progVista === 'lote') return (t.lote==null||t.lote==='') ? '—' : 'Lote ' + t.lote;
+      if (progVista === 'semana') { const d = t.fechaProg ? new Date(t.fechaProg + 'T12:00:00') : null; return d ? ('Semana del ' + fmtFechaCorta(lunesDe(d))) : 'Sin fecha'; }
+      return t.empleado || '— Sin asignar';
+    };
+    lista.forEach(t => { const k = claveDe(t); (grupos[k] = grupos[k] || []).push(t); });
+    const claves = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
+
+    container.innerHTML = claves.map(k => {
+      const items = grupos[k].slice().sort((a,b)=>(a.fechaProg||'').localeCompare(b.fechaProg||''));
+      const costo = items.reduce((sm,t)=>sm + (t.costoEst||0), 0);
+      let meta = '';
+      if (progVista === 'empleado' && k !== '— Sin asignar') {
+        const tr = getMaestro('trabajadores').find(x => x.nombre === k);
+        meta = tr ? ((tr.cuadrilla || tr.rol || '')) : '';
+      }
+      const icon = progVista === 'empleado' ? '👤' : (progVista === 'lote' ? '📍' : '🗓️');
+      return '<details open style="margin-bottom:8px; border:1px solid rgba(255,255,255,0.12); border-radius:8px; overflow:hidden">'
+        + '<summary style="cursor:pointer; padding:10px 14px; background:rgba(255,255,255,0.04); font-weight:600; color:var(--verde-claro)">'
+        + icon + ' ' + k + (meta ? ' <span style="color:var(--texto-dim); font-weight:400; font-size:12px">— ' + meta + '</span>' : '')
+        + '<span style="float:right; color:var(--texto-dim); font-weight:400; font-size:12px">' + items.length + ' tareas · ' + fmtCOP(costo) + '</span></summary>'
+        + '<table class="lotes-table" style="margin:0">' + thead + '<tbody>' + items.map(filaTareaHTML).join('') + '</tbody></table></details>';
+    }).join('');
+  }
+  function lunesDe(d) {
+    const x = new Date(d); const day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); return x.toISOString().slice(0,10);
+  }
+
+  // ── Modal tarea ──
+  function abrirModalTarea(id) {
+    if (!progPuedeEditar()) { alert('No tienes permisos para crear o editar tareas'); return; }
+    const cats = getMaestro('labores_cat');
+    const selAct = document.getElementById('tarea-actividad');
+    selAct.innerHTML = cats.map(c => '<option value="' + c.nombre + '">' + c.nombre + '</option>').join('');
+    const selEmp = document.getElementById('tarea-empleado');
+    selEmp.innerHTML = '<option value="">Sin asignar</option>' + getMaestro('trabajadores').map(t => '<option value="' + t.nombre + '">' + t.nombre + (t.cuadrilla ? ' · ' + t.cuadrilla : '') + '</option>').join('');
+    const selLote = document.getElementById('tarea-lote');
+    selLote.innerHTML = '<option value="">Sin lote</option>' + lotes.map(l => '<option value="' + l.numero + '">Lote ' + l.numero + (l.nombre ? ' · ' + l.nombre : '') + '</option>').join('');
+
+    const t = id ? tareas.find(x => x.id === id) : null;
+    document.getElementById('modal-tarea-title').textContent = t ? 'Editar tarea' : 'Nueva tarea';
+    document.getElementById('tarea-edit-id').value = t ? t.id : '';
+    selAct.value = t ? t.actividad : (cats[0] ? cats[0].nombre : '');
+    selEmp.value = t ? (t.empleado || '') : '';
+    selLote.value = t ? (t.lote || '') : '';
+    document.getElementById('tarea-fecha').value = t ? (t.fechaProg || '') : new Date().toISOString().slice(0,10);
+    document.getElementById('tarea-fechafin').value = t ? (t.fechaFin || '') : '';
+    document.getElementById('tarea-cantidad').value = t ? (t.cantidadMeta || '') : '';
+    document.getElementById('tarea-costo').value = t ? (t.costoEst || '') : '';
+    document.getElementById('tarea-estado').value = t ? (t.estado || 'programada') : 'programada';
+    document.getElementById('tarea-notas').value = t ? (t.notas || '') : '';
+    autoCalcularCostoTarea(!t); // recalcula costo solo si es nueva
+    document.getElementById('modal-tarea').classList.add('open');
+  }
+  function cerrarModalTarea() { document.getElementById('modal-tarea').classList.remove('open'); }
+
+  function autoCalcularCostoTarea(recalc) {
+    const act = document.getElementById('tarea-actividad').value;
+    const cant = parseFloat(document.getElementById('tarea-cantidad').value) || 0;
+    const fecha = document.getElementById('tarea-fecha').value || new Date().toISOString().slice(0,10);
+    const emp = (document.getElementById('tarea-empleado').value || '').trim();
+    const unidad = unidadDeActividad(act);
+    document.getElementById('tarea-unidad').textContent = unidad;
+    const unit = costoUnitActividad(act, fecha, emp);
+    const hint = document.getElementById('tarea-hint');
+    if (recalc !== false && unit && cant) {
+      document.getElementById('tarea-costo').value = Math.round(cant * unit);
+    }
+    if (hint) hint.textContent = unit
+      ? ('💲 Tarifa estimada: $' + unit.toLocaleString('es-CO') + '/' + unidad + (cant ? ' × ' + cant.toLocaleString('es-CO') + ' = $' + Math.round(cant*unit).toLocaleString('es-CO') : ''))
+      : '⚠ Sin tarifa registrada — ingresa el costo estimado manual';
+  }
+
+  function guardarTarea() {
+    const act = document.getElementById('tarea-actividad').value;
+    const cant = parseFloat(document.getElementById('tarea-cantidad').value) || 0;
+    const fecha = document.getElementById('tarea-fecha').value;
+    if (!act) { alert('Selecciona la actividad'); return; }
+    if (!fecha) { alert('Indica la fecha programada'); return; }
+    const id = document.getElementById('tarea-edit-id').value;
+    const datos = {
+      actividad: act,
+      empleado: document.getElementById('tarea-empleado').value,
+      lote: document.getElementById('tarea-lote').value,
+      fechaProg: fecha,
+      fechaFin: document.getElementById('tarea-fechafin').value || '',
+      cantidadMeta: cant,
+      unidad: unidadDeActividad(act),
+      costoEst: parseFloat(document.getElementById('tarea-costo').value) || 0,
+      estado: document.getElementById('tarea-estado').value || 'programada',
+      notas: document.getElementById('tarea-notas').value.trim()
+    };
+    if (id) {
+      const t = tareas.find(x => x.id === id);
+      if (t) Object.assign(t, datos);
+    } else {
+      datos.id = 'tk_' + Date.now();
+      datos.creadoEn = new Date().toISOString();
+      tareas.unshift(datos);
+    }
+    saveTareas();
+    cerrarModalTarea();
+    renderProgramacion();
+    if (typeof renderPresupuesto === 'function') renderPresupuesto();
+  }
+
+  function cambiarEstadoTarea(id, nuevo) {
+    const t = tareas.find(x => x.id === id);
+    if (!t) return;
+    t.estado = nuevo;
+    saveTareas();
+    renderProgramacion();
+    if (typeof renderPresupuesto === 'function') renderPresupuesto();
+  }
+
+  function completarTarea(id) {
+    const t = tareas.find(x => x.id === id);
+    if (!t) return;
+    if (t.estado === 'completada') { alert('Esta tarea ya fue completada'); return; }
+    if (!confirm('Marcar la tarea como completada. Se creará una labor PENDIENTE de aprobación con estos datos. ¿Continuar?')) return;
+    const labor = {
+      id: 'tsk_' + t.id + '_' + Date.now(),
+      actividad: t.actividad,
+      lote: t.lote,
+      fecha: new Date().toISOString().slice(0,10),
+      cantidad: t.cantidadMeta || 0,
+      unidad: t.unidad || '',
+      trabajador: t.empleado || '',
+      costo: t.costoEst || 0,
+      detalle: 'Desde programación',
+      obs: (t.notas ? t.notas + ' · ' : '') + 'Generada desde tarea programada',
+      estado: 'pendiente',
+      origen: 'Programación'
+    };
+    labores.unshift(labor);
+    saveLabores();
+    t.estado = 'completada';
+    t.laborId = labor.id;
+    saveTareas();
+    renderProgramacion();
+    if (typeof refrescarModulosLabores === 'function') refrescarModulosLabores();
+    alert('✓ Tarea completada. Se creó una labor pendiente de aprobación en el módulo Labores.');
+  }
+
+  function eliminarTarea(id) {
+    if (!confirm('¿Eliminar esta tarea programada?')) return;
+    tareas = tareas.filter(x => x.id !== id);
+    saveTareas();
+    renderProgramacion();
+    if (typeof renderPresupuesto === 'function') renderPresupuesto();
+  }
+
+  const COLS_CSV_TAREAS = [
+    {h:'Empleado', v:'empleado'}, {h:'Actividad', v:'actividad'}, {h:'Lote', v:'lote'},
+    {h:'Fecha programada', v:'fechaProg'}, {h:'Fecha fin', v:'fechaFin'},
+    {h:'Cantidad meta', v:'cantidadMeta'}, {h:'Unidad', v:'unidad'},
+    {h:'Costo estimado', v:'costoEst'}, {h:'Estado', v:'estado'}, {h:'Notas', v:'notas'}
+  ];
+  function exportarTareas() { exportarCSV('programacion', filtrarTareas(tareasVisibles()), COLS_CSV_TAREAS); }
+
   // ── PRESUPUESTO ─────────────────────────────────────────
   let presupuestos = JSON.parse(localStorage.getItem('agroweb_ppto') || '[]');
 
@@ -3265,6 +3681,18 @@
       cantidadPorCat[cat] = (cantidadPorCat[cat] || 0) + (l.cantidad || 0);
     });
 
+    // Comprometido = costo estimado de tareas del mes (por fechaProg), no canceladas,
+    // cuya labor generada aun no esta aprobada (evita doble conteo con Ejecutado).
+    const comprometidoPorCat = {};
+    const aprobIds = new Set(laboresAprobadas().map(l => l.id));
+    (typeof tareas !== 'undefined' ? tareas : []).forEach(t => {
+      if (t.estado === 'cancelada') return;
+      if ((t.fechaProg || '').slice(0,7) !== mes) return;
+      if (t.laborId && aprobIds.has(t.laborId)) return;
+      const cat = actividadCategoria[t.actividad] || 'Otro';
+      comprometidoPorCat[cat] = (comprometidoPorCat[cat] || 0) + (t.costoEst || 0);
+    });
+
     const totalPpto = partidas.reduce((s,p) => s + p.valor, 0);
     const totalEjec = partidas.reduce((s,p) => s + (ejecutadoPorCat[p.actividad] || 0), 0);
     const totalMeta = partidas.reduce((s,p) => s + (p.meta || 0), 0);
@@ -3277,6 +3705,9 @@
       : fmtCOP(totalPpto - totalEjec);
     document.querySelector('#ppto-disponible').nextElementSibling.textContent = totalMeta ? 'Actividades (ejec/meta)' : 'Disponible';
     document.getElementById('ppto-pct').textContent = totalPpto ? Math.round(totalEjec/totalPpto*100) + '%' : (totalMeta ? Math.round(totalCant/totalMeta*100)+'%' : '0%');
+    const totalComprometido = partidas.reduce((s,p) => s + (comprometidoPorCat[p.actividad] || 0), 0);
+    const compEl = document.getElementById('ppto-comprometido');
+    if (compEl) compEl.textContent = fmtCOP(totalComprometido);
 
     if (!partidas.length) {
       container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--texto-dim); background:var(--fondo-card); border:1px solid var(--borde); border-radius:12px">
@@ -3290,6 +3721,7 @@
 
     container.innerHTML = partidas.map(p => {
       const ejec = ejecutadoPorCat[p.actividad] || 0;
+      const comp = comprometidoPorCat[p.actividad] || 0;
       const cant = cantidadPorCat[p.actividad] || 0;
       const nLabores = laboresMes.filter(l => (actividadCategoria[l.actividad]||'Otro') === p.actividad).length;
 
@@ -3305,14 +3737,19 @@
       const alertaBadge = pctDineroReal > 100 ? '<span class="badge badge-rojo">Excedido $</span>'
         : pctDineroReal > 80 ? '<span class="badge badge-dorado">Alerta $</span>'
         : (p.meta && pctActReal >= 100) ? '<span class="badge badge-verde">Meta cumplida</span>' : '';
+      const compBadge = (p.valor && (ejec + comp) > p.valor) ? '<span class="badge badge-naranja" title="Ejecutado + comprometido supera el presupuesto">⚠ Comprometido excede</span>' : '';
 
       return `<div class="ppto-item">
         <div class="ppto-item-top">
-          <div class="ppto-item-name">${catIcono[p.actividad]||'📌'} ${p.actividad} ${alertaBadge}</div>
+          <div class="ppto-item-name">${catIcono[p.actividad]||'📌'} ${p.actividad} ${alertaBadge} ${compBadge}</div>
           <div class="ppto-item-nums">
             <div class="ppto-num">
               <div class="ppto-num-val" style="color:var(--texto-suave)">${p.valor ? fmtCOP(p.valor) : '—'}</div>
               <div class="ppto-num-label">Presupuestado</div>
+            </div>
+            <div class="ppto-num">
+              <div class="ppto-num-val" style="color:var(--naranja)">${comp ? fmtCOP(comp) : '—'}</div>
+              <div class="ppto-num-label">Comprometido</div>
             </div>
             <div class="ppto-num">
               <div class="ppto-num-val" style="color:${pctDineroReal>100?'var(--rojo)':'var(--dorado-claro)'}">${fmtCOP(ejec)}</div>
@@ -3347,10 +3784,12 @@
 
   document.getElementById('modal-labor').addEventListener('click', function(e) { if (e.target === this) cerrarModalLabor(); });
   document.getElementById('modal-ppto').addEventListener('click', function(e) { if (e.target === this) cerrarModalPpto(); });
+  { const mt = document.getElementById('modal-tarea'); if (mt) mt.addEventListener('click', function(e) { if (e.target === this) cerrarModalTarea(); }); }
 
   initMesSelector();
   renderLabores();
   renderPresupuesto();
+  renderProgramacion();
 
   // ── BÁSCULA ─────────────────────────────────────────────
   let pesajes = JSON.parse(localStorage.getItem('agroweb_pesajes') || '[]');
@@ -4590,6 +5029,18 @@
     ];
     savePpto();
 
+    // TAREAS PROGRAMADAS (asignaciones por empleado, ligadas al presupuesto)
+    tareas = [
+      { id: 'tk1', actividad: 'Fertilización', lote: '3', empleado: 'Carlos Andrés Ruiz', fechaProg: df(-1), cantidadMeta: 1200, unidad: 'palma', costoEst: 1200*1800, estado: 'programada', notas: 'Pase 02 — lote 3', creadoEn: d(1) },
+      { id: 'tk2', actividad: 'Plateo Químico', lote: '5', empleado: 'Luz Dary Martínez', fechaProg: df(-2), cantidadMeta: 900, unidad: 'palma', costoEst: 900*850, estado: 'programada', notas: 'Contratista SERVIGRAL', creadoEn: d(1) },
+      { id: 'tk3', actividad: 'Sanidad', lote: '3', empleado: 'María Fernanda Gómez', fechaProg: df(0), cantidadMeta: 15, unidad: 'palma', costoEst: 15*2500, estado: 'en_progreso', notas: 'Cirugía PC en focos activos', creadoEn: d(2) },
+      { id: 'tk4', actividad: 'Polinización ANA 1', lote: '1', empleado: 'Wilmer Rodríguez', fechaProg: df(0), cantidadMeta: 600, unidad: 'palma', costoEst: 600*450, estado: 'en_progreso', notas: '', creadoEn: d(2) },
+      { id: 'tk5', actividad: 'Plateo Mecánico', lote: '7', empleado: 'Yeison Castañeda', fechaProg: df(-4), cantidadMeta: 1100, unidad: 'palma', costoEst: 1100*780, estado: 'programada', notas: '3 pases', creadoEn: d(3) },
+      { id: 'tk6', actividad: 'Fertilización', lote: '2', empleado: 'Carlos Andrés Ruiz', fechaProg: df(-6), cantidadMeta: 800, unidad: 'palma', costoEst: 800*1800, estado: 'programada', notas: 'Refuerzo', creadoEn: d(3) },
+      { id: 'tk7', actividad: 'Poda', lote: '1', empleado: 'Luz Dary Martínez', fechaProg: df(-8), cantidadMeta: 300, unidad: 'palma', costoEst: 300*1200, estado: 'cancelada', notas: 'Reprogramada por lluvia', creadoEn: d(5) }
+    ];
+    saveTareas();
+
     // PESAJES BÁSCULA
     pesajes = [
       { id: 'ps1', tiquete: '00001', placa: 'SRT482', conductor: 'Pedro Martínez', lote: '1', destino: 'Extractora del Llano', bruto: 14850, tara: 7200, neto: 7650, racimos: 480, obs: '', fecha: d(2, 7), fechaSalida: d(2, 9) },
@@ -4688,6 +5139,7 @@
     actualizarDashboard();
     renderLabores();
     renderPresupuesto();
+    if (typeof renderProgramacion === 'function') renderProgramacion();
     renderBascula();
     renderMaestrosTabs();
     renderMaestroLista();
@@ -6326,6 +6778,7 @@
       fertilizacion: 'Fertilización',
       bascula: 'Báscula — Despacho RFF',
       sanidad: 'Sanidad y plagas',
+      programacion: 'Programación de actividades',
       presupuesto: 'Presupuesto de actividades',
       coroz: 'Coroz:IA',
       resumen: 'Resumen por etapa, finca o lote'
@@ -6334,6 +6787,7 @@
     if (id === 'resumen' && typeof renderResumen === 'function') renderResumen();
     if (id === 'coroz' && typeof actualizarEstadoClaveCoroz === 'function') actualizarEstadoClaveCoroz();
     if (id === 'mapa' && typeof renderMapa === 'function') renderMapa();
+    if (id === 'programacion' && typeof renderProgramacion === 'function') renderProgramacion();
   }
 
   function setMsg(text) {
@@ -6466,7 +6920,7 @@ ${corozContexto()}`;
   // ── INICIALIZACIÓN FINAL ────────────────────────────────
   // Versión del seed de datos. Al subirla, los navegadores que ya tienen
   // datos de una versión anterior recargan automáticamente los datos reales.
-  const DATA_VERSION = '2026-07-11-costos-drill';
+  const DATA_VERSION = '2026-07-13-programacion';
   const versionGuardada = localStorage.getItem('agroweb_data_version');
   if (!lotes.length && !labores.length && !pesajes.length) {
     // Primera vez: cargar los datos
