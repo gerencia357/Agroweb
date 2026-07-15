@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universo Mágico · Conoce nuestro jardín</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --azul: #1ea5ca;
+  --azul2: #0c4277;
+  --amarillo: #b2d50d;
+  --coral: #F06449;
+  --crema: #F0FAFF;
+  --gris-claro: #E2F4FA;
+  --blanco: #FFFFFF;
+  --gris: #3A3A3A;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { overflow-x:clip; width:100%; }
+body { font-family:"Plus Jakarta Sans",sans-serif; color:var(--gris); background:var(--blanco); font-size:16px; line-height:1.6; }
+img { max-width:100%; display:block; }
+h1,h2,h3,h4 { font-family:"Fraunces",serif; line-height:1.2; color:var(--azul2); }
+a { text-decoration:none; color:inherit; }
+p { margin-bottom:0.8rem; }
+
+.eyebrow { font-size:0.7rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--azul2); margin-bottom:0.7rem; display:block; }
+.badge { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.88); padding:0.3rem 0.85rem; border-radius:100px; font-size:0.75rem; font-weight:600; border:1px solid rgba(255,255,255,0.2); display:inline-block; }
+
+.btn-primary { background:var(--amarillo); color:#0c4277; padding:1rem 2.2rem; border-radius:100px; font-weight:700; font-size:1rem; cursor:pointer; border:none; text-decoration:none; display:inline-flex; align-items:center; gap:0.6rem; transition:transform 0.2s,box-shadow 0.2s; font-family:"Plus Jakarta Sans",sans-serif; }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(178,213,13,0.4); }
+.btn-ghost { background:transparent; color:rgba(255,255,255,0.9); padding:1rem 2rem; border-radius:100px; font-weight:600; font-size:0.95rem; cursor:pointer; border:1.5px solid rgba(255,255,255,0.4); text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; transition:background 0.2s; }
+.btn-ghost:hover { background:rgba(255,255,255,0.12); }
+
+/* REVEAL */
+.reveal { opacity:0; transition:opacity 0.7s ease; }
+.reveal.visible { opacity:1; }
+
+@keyframes heroBadge { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+
+/* HERO */
+.hero { background:linear-gradient(135deg,#0c4277 0%,#1ea5ca 60%,#0c4277 100%); padding:clamp(70px,10vw,110px) 5% clamp(60px,8vw,90px); position:relative; overflow:hidden; text-align:center; }
+.hero-bg { position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,0.06) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(178,213,13,0.08) 0%,transparent 40%);pointer-events:none; }
+.hero-inner { max-width:780px; margin:0 auto; position:relative; z-index:1; }
+.hero-badges { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; justify-content:center;  }
+.hero h1 { color:var(--blanco); font-size:clamp(2.2rem,5vw,3.8rem); margin-bottom:1.2rem; line-height:1.1; letter-spacing:-0.02em;  }
+.hero h1 em { font-style:italic; color:var(--amarillo); }
+.hero p { color:rgba(255,255,255,0.75); font-size:1.05rem; line-height:1.82; max-width:58ch; margin:0 auto 2rem; animation:heroFadeUp 0.6s ease 0.2s both; }
+.hero-cta-wrap { display:flex; flex-direction:column; align-items:center; gap:0.8rem; animation:heroFadeUp 0.6s ease 0.3s both; }
+.hero-cta-note { color:rgba(255,255,255,0.45); font-size:0.78rem; }
+
+/* STATS */
+.stats-bar { background:var(--azul2); padding:1.5rem 5%; }
+.stats-inner { max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,0.1); border-radius:16px; overflow:hidden; }
+.stat-item { background:rgba(12,66,119,0.8); padding:1.2rem 1rem; text-align:center; }
+.stat-num { font-family:"Fraunces",serif; font-size:2rem; font-weight:700; color:var(--blanco); line-height:1; display:block; }
+.stat-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amarillo); display:block; margin:0.2rem 0 0.1rem; }
+.stat-desc { font-size:0.72rem; color:rgba(255,255,255,0.45); line-height:1.3; }
+
+/* VIDEO */
+.video-sec { background:var(--blanco); padding:80px 5%; }
+.video-inner { max-width:860px; margin:0 auto; text-align:center; }
+.video-inner h2 { font-size:clamp(1.7rem,3vw,2.3rem); margin-bottom:0.8rem; }
+.video-inner p { color:#666; font-size:0.97rem; line-height:1.82; max-width:55ch; margin:0 auto 2.5rem; }
+
+/* FORMULARIO */
+.form-sec { background:var(--crema); padding:80px 5%; }
+.form-inner { max-width:640px; margin:0 auto; text-align:center; }
+.form-inner h2 { font-size:clamp(1.6rem,3vw,2.2rem); margin-bottom:0.6rem; }
+.form-inner .sub { color:#666; font-size:0.95rem; line-height:1.75; margin-bottom:2.5rem; max-width:48ch; margin-left:auto; margin-right:auto; }
+.form-box { background:var(--blanco); border-radius:24px; padding:2.5rem; box-shadow:0 4px 32px rgba(12,66,119,0.1); }
+.form-privacy { font-size:0.75rem; color:#aaa; margin-top:1rem; line-height:1.5; }
+.form-privacy span { color:var(--azul2); font-weight:600; }
+
+/* NO NEGOCIABLES */
+.neg-sec { background:var(--blanco); padding:100px 5%; }
+.neg-inner { max-width:1100px; margin:0 auto; }
+.neg-header { text-align:center; max-width:680px; margin:0 auto 4rem; }
+.neg-header h2 { font-size:clamp(1.8rem,3.5vw,2.8rem); line-height:1.15; }
+
+/* CTA FINAL */
+.cta-final { background:linear-gradient(135deg,#0c4277,#1ea5ca); padding:100px 5%; text-align:center; }
+.cta-final h2 { color:var(--blanco); font-size:clamp(1.8rem,3.5vw,2.8rem); margin-bottom:1rem; line-height:1.15; }
+.cta-final p { color:rgba(255,255,255,0.7); font-size:1rem; line-height:1.82; margin-bottom:2.5rem; max-width:52ch; margin-left:auto; margin-right:auto; }
+.cta-btns { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+.cta-nota { color:rgba(255,255,255,0.4); font-size:0.78rem; margin-top:1.2rem; }
+
+/* RESPONSIVE */
+@media(max-width:768px) {
+  .stats-inner { grid-template-columns:1fr 1fr; }
+  [style*="display:flex;border-radius:24px;overflow:hidden;box-shadow:0 6px 32px"] { flex-direction:column !important; }
+  [style*="width:300px"] { width:100% !important; padding:1.5rem !important; }
+  .cta-btns { flex-direction:column; align-items:center; }
+}
+@media(max-width:480px) {
+  .stats-inner { grid-template-columns:1fr 1fr; }
+  nav .nav-seguridad { display:none; }
+}
+
+@keyframes heroFadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes heroBadge { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+html, body { min-height:100%; overflow-x:hidden; }
+body { padding-bottom:0 !important; margin-bottom:0 !important; }
+section:last-of-type { margin-bottom:0; padding-bottom:clamp(60px,10vw,100px); }
+@supports (-webkit-touch-callout: none) {
+  body { min-height:-webkit-fill-available; }
+}
+
+html, body { margin:0 !important; padding:0 !important; width:100% !important; }
+section, .stats-bar {
+  margin-left: calc(-50vw + 50%) !important;
+  margin-right: calc(-50vw + 50%) !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  position: relative !important;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-inner">
+    <div class="hero-badges">
+      <span class="badge badge-gold" style="background:rgba(178,213,13,0.15);border-color:rgba(178,213,13,0.4);color:#b2d50d;">🌍 Great Little People · Primeros en Colombia</span>
+      <span class="badge">27 años · 6 sedes · Bogotá y Chía</span>
+    </div>
+    <h1>Dejar a tu hijo en un jardín<br>es un acto de confianza enorme.<br><em>Nosotros lo sabemos.</em></h1>
+    <p>Llevamos 27 años siendo el segundo hogar de miles de niños. La demostramos todos los días en el aula, en la cocina y en el patio.</p>
+    <div class="hero-cta-wrap">
+      <a href="javascript:void(0)" onclick="document.getElementById('formulario').scrollIntoView();" class="btn-primary" style="font-size:1.05rem;padding:1.1rem 2.5rem;">Quiero más información →</a>
+      <span class="hero-cta-note">Admisiones abiertas todo el año · Sin lista de espera</span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item"><span class="stat-num">27</span><span class="stat-label">años</span><span class="stat-desc">acompañando familias</span></div>
+    <div class="stat-item"><span class="stat-num">6</span><span class="stat-label">sedes</span><span class="stat-desc">Bogotá y Chía</span></div>
+    <div class="stat-item"><span class="stat-num">98.5%</span><span class="stat-label">satisfacción</span><span class="stat-desc">nos recomiendan</span></div>
+    <div class="stat-item"><span class="stat-num">K1–K5</span><span class="stat-label">niveles</span><span class="stat-desc">de 1 a 6 años</span></div>
+  </div>
+</div>
+
+<!-- VIDEO -->
+<section class="video-sec" id="video">
+  <div class="video-inner">
+    <div class="reveal">
+      <span class="eyebrow">Un mensaje para ti</span>
+      <h2>Antes de seguir, queremos darte la bienvenida.</h2>
+      <p>Somos una familia que lleva 27 años cuidando a los hijos de otras familias. Este mensaje es para ti, que estás buscando el mejor lugar para tu hijo.</p>
+    </div>
+    <div class="reveal" style="position:relative;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(12,66,119,0.25);aspect-ratio:16/9;">
+      <iframe style="position:absolute;inset:0;width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/VZ4wdK_xdNY?si=2Q1MkycdjdinDASo&controls=0&start=2" title="Universo Mágico · Video de bienvenida" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULARIO -->
+<section class="form-sec" id="formulario">
+  <div class="form-inner">
+    <div class="reveal">
+      <span class="eyebrow">Siguiente paso</span>
+      <h2>Déjanos tus datos y nos vemos en la charla.</h2>
+      <p class="sub">Sin presión. Sin compromisos. Solo una conversación real sobre lo que necesita tu hijo.</p>
+    </div>
+    <div class="form-box reveal">
+      <script type="text/javascript" src="https://api.clientify.net/web-marketing/superforms/script/200839.js"></script>
+      <p class="form-privacy">🔒 Tus datos están seguros. Solo te contactaremos para enviarte la información que pediste.</p>
+    </div>
+  </div>
+</section>
+
+<!-- NO NEGOCIABLES -->
+<section class="neg-sec">
+  <div class="neg-inner">
+    <div class="neg-header reveal">
+      <span class="eyebrow">Sabemos exactamente qué te preocupa.</span>
+      <h2>Por eso estas cuatro cosas no son negociables.</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2rem;">
+
+      <div class="reveal" style="display:flex;flex-direction:column;border-radius:24px;overflow:hidden;box-shadow:0 6px 32px rgba(12,66,119,0.08);">
+        <div style="background:#EFF7FF;padding:2rem 2rem 1.5rem;position:relative;overflow:hidden;">
+          <span style="position:absolute;bottom:-1rem;right:-0.5rem;font-family:'Fraunces',serif;font-size:8rem;font-weight:700;color:#1ea5ca;opacity:0.07;line-height:1;user-select:none;">01</span>
+          <span style="font-size:2rem;display:block;margin-bottom:1rem;">🛡️</span>
+          <p style="font-style:italic;color:#1ea5ca;font-size:0.88rem;line-height:1.6;margin-bottom:1rem;font-weight:600;">"¿Estará seguro físicamente? ¿Quién lo cuida si algo pasa?"</p>
+          <h3 style="font-size:1.1rem;color:#0c4277;margin-bottom:0.4rem;">Integridad física</h3>
+          <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#1ea5ca;">Extremo cuidado</span>
+        </div>
+        <div style="padding:3rem;background:#EFF7FF;flex:1;">
+          <p style="font-size:0.93rem;line-height:1.82;color:#555;margin-bottom:1.5rem;">La seguridad física es nuestra prioridad número uno. Tenemos protocolos estrictos en todas las sedes, desde el control de acceso hasta los procedimientos de emergencia, para que tu hijo esté protegido en todo momento y tú puedas trabajar tranquilo.</p>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;">
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1ea5ca;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Zonas Protegidas Emermedica en todas las sedes</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1ea5ca;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Todo el personal certificado en primeros auxilios</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1ea5ca;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Acceso controlado. Solo entra quien debe entrar.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1ea5ca;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Si algo pasa, te enterás de inmediato. Nunca a la salida.</span></div>
+          </div>
+          <p style="font-size:0.82rem;color:#1ea5ca;font-weight:700;margin:0;">Tu hijo está protegido. Tú puedes trabajar tranquilo.</p>
+        </div>
+      </div>
+
+      <div class="reveal" style="display:flex;flex-direction:column;border-radius:24px;overflow:hidden;box-shadow:0 6px 32px rgba(12,66,119,0.08);">
+        <div style="background:#F0FBF5;padding:2rem 2rem 1.5rem;position:relative;overflow:hidden;">
+          <span style="position:absolute;bottom:-1rem;right:-0.5rem;font-family:'Fraunces',serif;font-size:8rem;font-weight:700;color:#1a8a5a;opacity:0.08;line-height:1;user-select:none;">02</span>
+          <span style="font-size:2rem;display:block;margin-bottom:1rem;">👁️</span>
+          <p style="font-style:italic;color:#1a8a5a;font-size:0.88rem;line-height:1.6;margin-bottom:1rem;font-weight:600;">"¿Lo van a ver a él, o va a ser uno más del grupo?"</p>
+          <h3 style="font-size:1.1rem;color:#0c4277;margin-bottom:0.4rem;">Integridad emocional</h3>
+          <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#1a8a5a;">Extremo cuidado</span>
+        </div>
+        <div style="padding:3rem;background:#F0FBF5;flex:1;">
+          <p style="font-size:0.93rem;line-height:1.82;color:#555;margin-bottom:1.5rem;">Trabajamos con grupos de máximo 16 niños, promedio real de 12, para que ninguna docente pierda de vista a ningún niño. Usamos Conscious Discipline, un programa basado en neurociencia que enseña a los adultos a regular sus propias emociones para acompañar mejor las del niño.</p>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;">
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1a8a5a;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">La docente nota cuando algo le pasa, sin que nadie se lo diga.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1a8a5a;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Seguimiento individual del desarrollo de cada niño.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1a8a5a;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Informes periódicos y comunicación directa vía Colegium.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#1a8a5a;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Reuniones individuales con los padres cada período.</span></div>
+          </div>
+          <p style="font-size:0.82rem;color:#1a8a5a;font-weight:700;margin:0;">Tu hijo es visto, conocido y acompañado. Todos los días.</p>
+        </div>
+      </div>
+
+      <div class="reveal" style="display:flex;flex-direction:column;border-radius:24px;overflow:hidden;box-shadow:0 6px 32px rgba(12,66,119,0.08);">
+        <div style="background:#FFF8EE;padding:2rem 2rem 1.5rem;position:relative;overflow:hidden;">
+          <span style="position:absolute;bottom:-1rem;right:-0.5rem;font-family:'Fraunces',serif;font-size:8rem;font-weight:700;color:#D4820A;opacity:0.08;line-height:1;user-select:none;">03</span>
+          <span style="font-size:2rem;display:block;margin-bottom:1rem;">🤝</span>
+          <p style="font-style:italic;color:#D4820A;font-size:0.88rem;line-height:1.6;margin-bottom:1rem;font-weight:600;">"¿Los valores del jardín van a reforzar lo que enseñamos en casa?"</p>
+          <h3 style="font-size:1.1rem;color:#0c4277;margin-bottom:0.4rem;">Mismos valores</h3>
+          <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#D4820A;">Los mismos en casa y en el jardín</span>
+        </div>
+        <div style="padding:3rem;background:#FFF8EE;flex:1;">
+          <p style="font-size:0.93rem;line-height:1.82;color:#555;margin-bottom:1.5rem;">Nuestra filosofía está inspirada en principios japoneses como Ikigai, Kaizen y Shoshin. No son conceptos en un afiche: son la forma en que nuestras docentes hablan con los niños, resuelven conflictos y celebran los logros. Lo que trabajamos en el jardín refuerza lo que tú construyes en casa.</p>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;">
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#D4820A;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">El esfuerzo se celebra, no solo el resultado.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#D4820A;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">El error es parte del aprendizaje, no motivo de vergüenza.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#D4820A;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">La autonomía se entrena desde K1.</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#D4820A;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;">Ser buena persona es el primer objetivo, siempre.</span></div>
+          </div>
+          <p style="font-size:0.82rem;color:#D4820A;font-weight:700;margin:0;">El mismo lenguaje de valores en el jardín y en tu casa.</p>
+        </div>
+      </div>
+
+      <div class="reveal" style="display:flex;flex-direction:column;border-radius:24px;overflow:hidden;box-shadow:0 6px 32px rgba(12,66,119,0.08);">
+        <div style="background:#F3F0FF;padding:2rem 2rem 1.5rem;position:relative;overflow:hidden;">
+          <span style="position:absolute;bottom:-1rem;right:-0.5rem;font-family:'Fraunces',serif;font-size:8rem;font-weight:700;color:#6B5CE7;opacity:0.08;line-height:1;user-select:none;">04</span>
+          <span style="font-size:2rem;display:block;margin-bottom:1rem;">🧭</span>
+          <p style="font-style:italic;color:#6B5CE7;font-size:0.88rem;line-height:1.6;margin-bottom:1rem;font-weight:600;">"¿Tiene un modelo pedagógico real o solo actividades bonitas?"</p>
+          <h3 style="font-size:1.1rem;color:#0c4277;margin-bottom:0.4rem;">Modelo pedagógico</h3>
+          <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#6B5CE7;">27 años evolucionando</span>
+        </div>
+        <div style="padding:3rem;background:#F3F0FF;flex:1;">
+          <p style="font-size:0.93rem;line-height:1.82;color:#555;margin-bottom:1.5rem;">Nuestros egresados ingresan a los mejores colegios de Colombia con resultados sobresalientes. Es el resultado de 27 años aplicando un modelo pedagógico riguroso, con metodologías probadas y un currículo que desarrolla pensamiento real desde K1.</p>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;">
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#6B5CE7;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;"><strong>Great Little People</strong> · inglés por inmersión desde K1</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#6B5CE7;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;"><strong>Matemáticas Singapur</strong> · método CPA</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#6B5CE7;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;"><strong>Método Letras Negret</strong> · lectoescritura desde la emoción</span></div>
+            <div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:#6B5CE7;font-weight:800;flex-shrink:0;">✓</span><span style="font-size:0.87rem;color:#444;line-height:1.5;"><strong>Continuidad</strong> · hasta grado 11 en Gimnasio La Arboleda</span></div>
+          </div>
+          <p style="font-size:0.82rem;color:#6B5CE7;font-weight:700;margin:0;">Cada actividad tiene un propósito. Puedes preguntarnos cuál es.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <div class="reveal">
+    <span class="eyebrow" style="color:var(--amarillo);">Admisiones 2026</span>
+    <h2>El primer paso no es una matrícula.<br>Es conocernos.</h2>
+    <p>Agenda una visita, trae a tu hijo si quieres y haznos todas las preguntas. No es una presentación de ventas. Es un día real en el jardín.</p>
+    <div style="display:inline-block;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:1.5rem 2.5rem;margin-bottom:2rem;text-align:left;">
+      <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.45);display:block;margin-bottom:0.3rem;">Planes desde</span>
+      <span style="font-family:'Fraunces',serif;font-size:2.5rem;font-weight:700;color:var(--blanco);line-height:1;display:block;letter-spacing:-0.02em;">$995.000</span>
+      <span style="font-size:0.82rem;color:rgba(255,255,255,0.45);display:block;margin:0.3rem 0 1rem;">/ mes · El detalle lo conversamos en la visita</span>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <div style="display:flex;gap:0.6rem;color:rgba(255,255,255,0.82);font-size:0.85rem;"><span style="color:var(--amarillo);font-weight:800;">✓</span><span>Great Little People · Inglés inmersivo desde K1</span></div>
+        <div style="display:flex;gap:0.6rem;color:rgba(255,255,255,0.82);font-size:0.85rem;"><span style="color:var(--amarillo);font-weight:800;">✓</span><span>Máximo 16 niños por aula — promedio real de 12</span></div>
+        <div style="display:flex;gap:0.6rem;color:rgba(255,255,255,0.82);font-size:0.85rem;"><span style="color:var(--amarillo);font-weight:800;">✓</span><span>Alimentación real. Cero ultraprocesados.</span></div>
+        <div style="display:flex;gap:0.6rem;color:rgba(255,255,255,0.82);font-size:0.85rem;"><span style="color:var(--amarillo);font-weight:800;">✓</span><span>6 sedes en Bogotá y Chía · Calendario A</span></div>
+      </div>
+    </div>
+    <div class="cta-btns">
+      <a href="javascript:void(0)" onclick="document.getElementById('formulario').scrollIntoView();" class="btn-primary" style="font-size:1rem;padding:1rem 2.5rem;">Quiero más información →</a>
+    </div>
+    <p class="cta-nota">Admisiones abiertas todo el año · Sin lista de espera · 6 sedes</p>
+  </div>
+</section>
+
+<script>
+(function() {
+  var els = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(function(el) { observer.observe(el); });
+})();
+</script>
+
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1332557502360586');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1332557502360586&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && (e.data.type === 'hsFormCallback' ||
+      (typeof e.data === 'string' && e.data.indexOf('form') !== -1))) {
+    fbq('track', 'Lead');
+  }
+});
+document.addEventListener('submit', function(e) {
+  fbq('track', 'Lead');
+}, true);
+</script>
+</body>
+</html>
