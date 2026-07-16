@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Vida — Sistema Operativo Personal</title>
+<meta name="description" content="Tareas, hábitos, metas, diario y calendario. Tu vida en un solo lugar.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0d16">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Vida">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -318,6 +327,7 @@
   <nav class="nav" id="nav"></nav>
   <div class="side-foot">
     <div class="mini" id="foot-date"></div>
+    <button class="btn primary sm hidden" style="width:100%;margin-bottom:8px" id="btn-install" onclick="instalarApp()">⬇️ Instalar app</button>
     <button class="btn ghost sm" style="width:100%" onclick="openAjustes()">⚙️ Ajustes y datos</button>
   </div>
 </aside>
@@ -1220,6 +1230,34 @@ function quickAdd() {
 
 /* ── helpers ── */
 function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+/* ═══════════ PWA: service worker + instalación ═══════════ */
+let _deferredPrompt = null;
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  const b = document.getElementById("btn-install");
+  if (b) b.classList.remove("hidden");
+});
+window.addEventListener("appinstalled", () => {
+  _deferredPrompt = null;
+  const b = document.getElementById("btn-install");
+  if (b) b.classList.add("hidden");
+  toast("App instalada 🎉");
+});
+async function instalarApp() {
+  if (!_deferredPrompt) { toast("Usa el menú del navegador → “Instalar app / Añadir a inicio”", "err"); return; }
+  _deferredPrompt.prompt();
+  await _deferredPrompt.userChoice;
+  _deferredPrompt = null;
+  const b = document.getElementById("btn-install");
+  if (b) b.classList.add("hidden");
+}
 
 /* ═══════════ INIT ═══════════ */
 function init() {
