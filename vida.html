@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Vida — Sistema Operativo Personal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0b0d16;
+    --bg-2: #10131f;
+    --card: #151929;
+    --card-2: #1b2033;
+    --border: #262c42;
+    --border-soft: #1e2438;
+    --violet: #8b7ff5;
+    --violet-dim: #6c5ce0;
+    --violet-soft: #2a2749;
+    --teal: #34d3c0;
+    --amber: #f5b544;
+    --rose: #f56d8b;
+    --blue: #5aa2f5;
+    --green: #4ade80;
+    --red: #f4506b;
+    --text: #eef1fb;
+    --text-soft: #9aa3c4;
+    --text-dim: #5b6488;
+    --shadow: 0 8px 30px rgba(0,0,0,0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--violet-soft); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #232a42; border-radius: 8px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: #2e3550; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: 236px;
+    background: var(--bg-2);
+    border-right: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 100;
+    transition: transform .25s ease;
+  }
+  .brand {
+    padding: 22px 22px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-logo {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    display: grid; place-items: center;
+    font-size: 20px;
+    box-shadow: 0 4px 14px rgba(139,127,245,.35);
+  }
+  .brand-txt { line-height: 1.15; }
+  .brand-txt b { font-family: 'Space Grotesk'; font-size: 16px; letter-spacing: .2px; }
+  .brand-txt span { font-size: 11px; color: var(--text-dim); }
+
+  .nav { flex: 1; overflow-y: auto; padding: 6px 12px 12px; }
+  .nav-group { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 16px 12px 6px; font-weight: 600; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    color: var(--text-soft); cursor: pointer;
+    font-size: 14px; font-weight: 500;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .nav-item .ico { font-size: 16px; width: 20px; text-align: center; }
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { background: var(--violet-soft); color: #fff; }
+  .nav-item .badge {
+    margin-left: auto; background: var(--violet-dim); color: #fff;
+    font-size: 10px; font-weight: 700; min-width: 18px; height: 18px;
+    padding: 0 5px; border-radius: 9px; display: grid; place-items: center;
+  }
+  .nav-item .badge.warn { background: var(--amber); color: #241a00; }
+
+  .side-foot { padding: 12px; border-top: 1px solid var(--border-soft); }
+  .side-foot .mini { font-size: 11px; color: var(--text-dim); padding: 0 8px 8px; }
+
+  /* ─── MAIN ─── */
+  .main { flex: 1; margin-left: 236px; min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(11,13,22,.82); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 14px 26px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .topbar h1 { font-family: 'Space Grotesk'; font-size: 20px; font-weight: 600; }
+  .topbar .sub { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+  .topbar .spacer { flex: 1; }
+  .btn-burger { display: none; background: none; border: 1px solid var(--border); color: var(--text); width: 38px; height: 38px; border-radius: 10px; font-size: 18px; cursor: pointer; }
+
+  .content { padding: 26px; max-width: 1180px; width: 100%; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+    padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); cursor: pointer;
+    font-size: 13.5px; font-weight: 600; font-family: inherit;
+    transition: all .15s;
+  }
+  .btn:hover { border-color: #3a4368; background: var(--card-2); }
+  .btn.primary { background: linear-gradient(135deg, var(--violet-dim), var(--violet)); border-color: transparent; color: #fff; box-shadow: 0 4px 14px rgba(108,92,224,.35); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; }
+  .btn.sm { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; }
+  .btn.danger { color: var(--red); border-color: #3a2530; }
+  .btn.danger:hover { background: #2a1a20; }
+  .icon-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 15px; padding: 4px; border-radius: 6px; transition: all .15s; }
+  .icon-btn:hover { color: var(--text); background: var(--card-2); }
+
+  /* ─── CARDS ─── */
+  .card { background: var(--card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 20px; }
+  .card-h { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .card-h h2 { font-family: 'Space Grotesk'; font-size: 16px; font-weight: 600; }
+  .card-h .spacer { flex: 1; }
+
+  .grid { display: grid; gap: 16px; }
+  .g-2 { grid-template-columns: repeat(2, 1fr); }
+  .g-3 { grid-template-columns: repeat(3, 1fr); }
+  .g-4 { grid-template-columns: repeat(4, 1fr); }
+
+  /* Stat tiles */
+  .stat { background: var(--card); border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px 18px; }
+  .stat .n { font-family: 'Space Grotesk'; font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat .l { font-size: 12px; color: var(--text-soft); margin-top: 6px; }
+  .stat .ico { font-size: 20px; float: right; opacity: .85; }
+
+  /* ─── TASKS ─── */
+  .task {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--border-soft); background: var(--bg-2);
+    margin-bottom: 8px; transition: border-color .15s;
+  }
+  .task:hover { border-color: var(--border); }
+  .task.done { opacity: .55; }
+  .task.done .task-title { text-decoration: line-through; }
+  .chk {
+    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--text-dim);
+    cursor: pointer; flex-shrink: 0; margin-top: 1px; display: grid; place-items: center;
+    transition: all .15s; font-size: 12px; color: transparent;
+  }
+  .chk:hover { border-color: var(--violet); }
+  .chk.on { background: var(--violet); border-color: var(--violet); color: #fff; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: 14px; font-weight: 500; }
+  .task-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; align-items: center; }
+  .tag { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: var(--card-2); color: var(--text-soft); display: inline-flex; align-items: center; gap: 4px; }
+  .tag.p-alta { background: #3a1f28; color: #ff8ba3; }
+  .tag.p-media { background: #3a3018; color: var(--amber); }
+  .tag.p-baja { background: #1c3320; color: #7ee29a; }
+  .tag.overdue { background: #3a1f28; color: #ff8ba3; }
+  .task-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+  .task:hover .task-actions { opacity: 1; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+  .empty .big { font-size: 34px; margin-bottom: 10px; }
+
+  /* Segmented control */
+  .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg button { background: none; border: none; color: var(--text-soft); padding: 6px 13px; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; font-family: inherit; }
+  .seg button.on { background: var(--violet-soft); color: #fff; }
+
+  /* ─── HABITS ─── */
+  .habit { border: 1px solid var(--border-soft); border-radius: 14px; padding: 14px 16px; background: var(--bg-2); margin-bottom: 10px; }
+  .habit-top { display: flex; align-items: center; gap: 12px; }
+  .habit-ico { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+  .habit-name { font-weight: 600; font-size: 14.5px; }
+  .habit-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+  .streak { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--amber); font-weight: 700; }
+  .check-big {
+    width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--border);
+    cursor: pointer; display: grid; place-items: center; font-size: 20px;
+    transition: all .15s; flex-shrink: 0; background: var(--card);
+  }
+  .check-big:hover { border-color: var(--green); }
+  .check-big.on { background: var(--green); border-color: var(--green); color: #06280f; }
+  .habit-grid { display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap; }
+  .hcell { width: 22px; height: 22px; border-radius: 6px; background: var(--card-2); font-size: 9px; color: var(--text-dim); display: grid; place-items: center; position: relative; }
+  .hcell.done { background: var(--green); }
+  .hcell.today { outline: 2px solid var(--violet); outline-offset: 1px; }
+
+  /* ─── GOALS ─── */
+  .goal { border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px 18px; background: var(--bg-2); margin-bottom: 12px; }
+  .goal-top { display: flex; align-items: center; gap: 12px; }
+  .goal-title { font-weight: 600; font-size: 15px; }
+  .progress { height: 8px; border-radius: 20px; background: var(--card-2); overflow: hidden; margin-top: 12px; }
+  .progress > i { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--violet), var(--teal)); transition: width .4s; }
+  .ring { --p: 0; width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+    background: conic-gradient(var(--violet) calc(var(--p)*1%), var(--card-2) 0);
+    display: grid; place-items: center; position: relative; }
+  .ring::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--bg-2); }
+  .ring span { position: relative; font-size: 12px; font-weight: 700; }
+
+  /* ─── NOTES / DIARY ─── */
+  .note { border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px; background: var(--bg-2); margin-bottom: 12px; }
+  .note-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .note-date { font-size: 12px; color: var(--text-dim); }
+  .note-mood { font-size: 20px; }
+  .note-content { font-size: 13.5px; color: var(--text-soft); line-height: 1.6; white-space: pre-wrap; }
+  .mood-pick { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mood-pick button { width: 42px; height: 42px; border-radius: 11px; border: 1px solid var(--border); background: var(--card); font-size: 22px; cursor: pointer; transition: all .15s; }
+  .mood-pick button:hover { transform: scale(1.1); }
+  .mood-pick button.on { border-color: var(--violet); background: var(--violet-soft); }
+
+  /* ─── CALENDAR ─── */
+  .cal-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .cal-head h2 { font-family: 'Space Grotesk'; font-size: 18px; text-transform: capitalize; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-dow { text-align: center; font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; padding-bottom: 4px; }
+  .cal-cell {
+    min-height: 96px; border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 6px 7px; background: var(--bg-2); cursor: pointer; transition: border-color .15s;
+    display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+  }
+  .cal-cell:hover { border-color: var(--violet); }
+  .cal-cell.other { opacity: .38; }
+  .cal-cell.today { border-color: var(--violet); background: var(--violet-soft); }
+  .cal-cell .dn { font-size: 12.5px; font-weight: 600; }
+  .cal-cell.today .dn { color: #fff; }
+  .cal-pill { font-size: 10.5px; padding: 2px 6px; border-radius: 5px; background: var(--violet-soft); color: #cfc9ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-pill.task { background: #23324a; color: #b9d4ff; }
+  .cal-pill.habit { background: #1f3327; color: #9ce6b3; }
+  .cal-pill.done { opacity: .5; text-decoration: line-through; }
+
+  /* ─── MODAL ─── */
+  .overlay { position: fixed; inset: 0; background: rgba(4,6,12,.7); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 18px; width: 100%; max-width: 520px; box-shadow: var(--shadow); animation: pop .18s ease; }
+  @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0; } }
+  .modal-h { padding: 20px 22px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; }
+  .modal-h h3 { font-family: 'Space Grotesk'; font-size: 17px; }
+  .modal-b { padding: 22px; display: flex; flex-direction: column; gap: 15px; }
+  .modal-f { padding: 16px 22px; border-top: 1px solid var(--border-soft); display: flex; gap: 10px; justify-content: flex-end; }
+
+  .field label { display: block; font-size: 12.5px; color: var(--text-soft); margin-bottom: 6px; font-weight: 600; }
+  .field input, .field textarea, .field select {
+    width: 100%; padding: 11px 13px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg-2); color: var(--text);
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--violet); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field-row { display: flex; gap: 12px; }
+  .field-row .field { flex: 1; }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-2); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-soft); transition: all .15s; }
+  .chip:hover { border-color: var(--violet); }
+  .chip.on { background: var(--violet-soft); border-color: var(--violet); color: #fff; }
+
+  .ico-pick { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .ico-pick button { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-2); font-size: 18px; cursor: pointer; }
+  .ico-pick button.on { border-color: var(--violet); background: var(--violet-soft); }
+
+  /* Toast */
+  .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 400; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { background: var(--card-2); border: 1px solid var(--border); color: var(--text); padding: 12px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 500; box-shadow: var(--shadow); animation: slideUp .25s ease; display: flex; align-items: center; gap: 8px; }
+  .toast.ok { border-color: #234a34; } .toast.ok::before { content: '✅'; }
+  .toast.err { border-color: #4a2330; } .toast.err::before { content: '⚠️'; }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } }
+
+  .divider { height: 1px; background: var(--border-soft); margin: 4px 0; }
+  .muted { color: var(--text-dim); font-size: 12.5px; }
+  .hidden { display: none !important; }
+  a.link { color: var(--violet); text-decoration: none; } a.link:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 860px) {
+    .sidebar { transform: translateX(-100%); box-shadow: var(--shadow); }
+    body.nav-open .sidebar { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .btn-burger { display: grid; place-items: center; }
+    .g-2, .g-3, .g-4 { grid-template-columns: 1fr; }
+    .content { padding: 18px; }
+    .cal-cell { min-height: 68px; }
+    .cal-pill { display: none; }
+    .cal-cell::after { content: attr(data-count); font-size: 9px; color: var(--violet); }
+  }
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 90; display: none; }
+  body.nav-open .scrim { display: block; }
+  @media (min-width: 861px) { .scrim { display: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">◎</div>
+    <div class="brand-txt"><b>Mi Vida</b><span>Sistema operativo personal</span></div>
+  </div>
+  <nav class="nav" id="nav"></nav>
+  <div class="side-foot">
+    <div class="mini" id="foot-date"></div>
+    <button class="btn ghost sm" style="width:100%" onclick="openAjustes()">⚙️ Ajustes y datos</button>
+  </div>
+</aside>
+<div class="scrim" onclick="toggleNav(false)"></div>
+
+<!-- ─── MAIN ─── -->
+<div class="main">
+  <div class="topbar">
+    <button class="btn-burger" onclick="toggleNav()">☰</button>
+    <div>
+      <h1 id="pg-title">Hoy</h1>
+      <div class="sub" id="pg-sub"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="quickAdd()">＋ Nuevo</button>
+  </div>
+  <div class="content" id="view"></div>
+</div>
+
+<!-- ─── MODAL ─── -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   MI VIDA — Sistema operativo personal
+   Datos 100% locales (localStorage). Sin servidor.
+   ═══════════════════════════════════════════════════════════ */
+
+const STORE_KEY = 'mivida_state_v1';
+const uid = () => 'x' + Math.random().toString(36).slice(2, 9) + (state ? state._seq++ : 0);
+
+/* ── Estado ── */
+let state = {
+  _seq: 0,
+  tareas: [],
+  habitos: [],
+  metas: [],
+  notas: [],
+  eventos: [],
+  proyectos: ['Personal', 'Trabajo', 'Salud', 'Hogar'],
+  config: { nombre: '', inicioSemana: 1 }
+};
+let vista = 'hoy';
+let calRef = null; // fecha de referencia del calendario
+
+/* ── Persistencia ── */
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('No se pudo guardar (almacenamiento lleno)', 'err'); }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      state = Object.assign(state, s);
+      ['tareas','habitos','metas','notas','eventos','proyectos'].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
+      if (!state.config) state.config = { nombre: '', inicioSemana: 1 };
+      if (typeof state._seq !== 'number') state._seq = 0;
+    } else {
+      seed();
+    }
+  } catch (e) { console.error(e); seed(); }
+}
+
+/* ── Datos de ejemplo (solo primer arranque) ── */
+function seed() {
+  const t = todayStr();
+  state.habitos = [
+    { id: uid(), nombre: 'Beber 2 L de agua', icono: '💧', color: '#5aa2f5', meta: 'diario', registros: {}, creado: t },
+    { id: uid(), nombre: 'Ejercicio 30 min', icono: '🏃', color: '#4ade80', meta: 'diario', registros: {}, creado: t },
+    { id: uid(), nombre: 'Leer 20 min', icono: '📚', color: '#f5b544', meta: 'diario', registros: {}, creado: t },
+    { id: uid(), nombre: 'Meditar', icono: '🧘', color: '#8b7ff5', meta: 'diario', registros: {}, creado: t }
+  ];
+  state.tareas = [
+    { id: uid(), titulo: 'Configurar mi sistema operativo de vida', notas: '', prioridad: 'media', proyecto: 'Personal', fechaLimite: t, estado: false, creado: t },
+    { id: uid(), titulo: 'Definir mis 3 metas del trimestre', notas: '', prioridad: 'alta', proyecto: 'Personal', fechaLimite: addDays(t, 2), estado: false, creado: t }
+  ];
+  state.metas = [
+    { id: uid(), titulo: 'Leer 12 libros este año', descripcion: 'Un libro por mes', categoria: 'Crecimiento', fechaObjetivo: t.slice(0,4) + '-12-31', progreso: 25, estado: 'activa', creado: t }
+  ];
+  save();
+}
+
+/* ── Utilidades de fecha ── */
+function todayStr() { const d = new Date(); return fmtISO(d); }
+function fmtISO(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function parseISO(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function addDays(s, n) { const d = parseISO(s); d.setDate(d.getDate()+n); return fmtISO(d); }
+function diffDays(a, b) { return Math.round((parseISO(a) - parseISO(b)) / 86400000); }
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DOW = ['D','L','M','X','J','V','S'];
+function fechaLarga(s) { const d = parseISO(s); return DIAS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()]; }
+function fechaCorta(s) {
+  if (!s) return '';
+  const d = parseISO(s), hoy = todayStr(), df = diffDays(s, hoy);
+  if (df === 0) return 'Hoy';
+  if (df === 1) return 'Mañana';
+  if (df === -1) return 'Ayer';
+  if (df > 1 && df <= 7) return DIAS[d.getDay()];
+  return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3);
+}
+
+/* ── Toast ── */
+function toast(msg, tipo) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (tipo === 'err' ? 'err' : 'ok');
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 2600);
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ═══════════ NAVEGACIÓN ═══════════ */
+const NAV = [
+  { grupo: 'Diario' },
+  { id: 'hoy', ico: '☀️', txt: 'Hoy' },
+  { id: 'calendario', ico: '🗓️', txt: 'Calendario' },
+  { grupo: 'Gestión' },
+  { id: 'tareas', ico: '✓', txt: 'Tareas' },
+  { id: 'habitos', ico: '🔥', txt: 'Hábitos' },
+  { id: 'metas', ico: '🎯', txt: 'Metas' },
+  { id: 'diario', ico: '📓', txt: 'Diario y notas' }
+];
+const TITULOS = {
+  hoy: 'Hoy', calendario: 'Calendario', tareas: 'Tareas',
+  habitos: 'Hábitos', metas: 'Metas', diario: 'Diario y notas'
+};
+
+function renderNav() {
+  const pend = state.tareas.filter(t => !t.estado).length;
+  const hoyHab = state.habitos.filter(h => !h.registros[todayStr()]).length;
+  document.getElementById('nav').innerHTML = NAV.map(n => {
+    if (n.grupo) return `<div class="nav-group">${n.grupo}</div>`;
+    let badge = '';
+    if (n.id === 'tareas' && pend) badge = `<span class="badge">${pend}</span>`;
+    if (n.id === 'habitos' && hoyHab) badge = `<span class="badge warn">${hoyHab}</span>`;
+    return `<div class="nav-item ${vista===n.id?'active':''}" onclick="go('${n.id}')">
+      <span class="ico">${n.ico}</span><span>${n.txt}</span>${badge}</div>`;
+  }).join('');
+}
+
+function go(v) {
+  vista = v;
+  document.getElementById('pg-title').textContent = TITULOS[v] || v;
+  renderNav();
+  render();
+  toggleNav(false);
+  window.scrollTo(0, 0);
+}
+
+function toggleNav(force) {
+  const on = force === undefined ? !document.body.classList.contains('nav-open') : force;
+  document.body.classList.toggle('nav-open', on);
+}
+
+/* ═══════════ RENDER PRINCIPAL ═══════════ */
+function render() {
+  const v = document.getElementById('view');
+  const sub = document.getElementById('pg-sub');
+  sub.textContent = '';
+  if (vista === 'hoy') renderHoy(v, sub);
+  else if (vista === 'calendario') renderCalendario(v, sub);
+  else if (vista === 'tareas') renderTareas(v, sub);
+  else if (vista === 'habitos') renderHabitos(v, sub);
+  else if (vista === 'metas') renderMetas(v, sub);
+  else if (vista === 'diario') renderDiario(v, sub);
+}
+
+/* ═══════════ HOY ═══════════ */
+function renderHoy(v, sub) {
+  const hoy = todayStr();
+  sub.textContent = fechaLarga(hoy).charAt(0).toUpperCase() + fechaLarga(hoy).slice(1);
+  const saludo = greeting();
+  const nombre = state.config.nombre ? ', ' + esc(state.config.nombre) : '';
+
+  const tareasHoy = state.tareas.filter(t => !t.estado && t.fechaLimite && t.fechaLimite <= hoy)
+    .sort((a,b) => (a.fechaLimite||'').localeCompare(b.fechaLimite||''));
+  const vencidas = tareasHoy.filter(t => t.fechaLimite < hoy).length;
+  const habPend = state.habitos.filter(h => !h.registros[hoy]);
+  const habDone = state.habitos.length - habPend.length;
+  const eventosHoy = state.eventos.filter(e => (e.inicio||'').slice(0,10) === hoy)
+    .sort((a,b) => (a.inicio||'').localeCompare(b.inicio||''));
+
+  v.innerHTML = `
+    <div style="margin-bottom:22px">
+      <h2 style="font-family:'Space Grotesk';font-size:24px;font-weight:600">${saludo}${nombre} 👋</h2>
+      <p class="muted" style="margin-top:6px">Esto es lo que tienes hoy. Un día a la vez.</p>
+    </div>
+
+    <div class="grid g-4" style="margin-bottom:22px">
+      <div class="stat"><span class="ico">✓</span><div class="n">${tareasHoy.length}</div><div class="l">Tareas para hoy</div></div>
+      <div class="stat"><span class="ico">🔥</span><div class="n">${habDone}/${state.habitos.length}</div><div class="l">Hábitos completados</div></div>
+      <div class="stat"><span class="ico">🗓️</span><div class="n">${eventosHoy.length}</div><div class="l">Eventos en calendario</div></div>
+      <div class="stat"><span class="ico">🎯</span><div class="n">${state.metas.filter(m=>m.estado==='activa').length}</div><div class="l">Metas activas</div></div>
+    </div>
+
+    <div class="grid g-2" style="align-items:start">
+      <div class="card">
+        <div class="card-h"><h2>✓ Tareas de hoy</h2><div class="spacer"></div>
+          ${vencidas ? `<span class="tag overdue">${vencidas} vencida${vencidas>1?'s':''}</span>` : ''}
+          <button class="btn ghost sm" onclick="openTarea()">＋</button></div>
+        ${tareasHoy.length ? tareasHoy.map(taskHTML).join('') : emptyBox('🎉','Nada pendiente para hoy','Disfruta el día o adelanta algo.')}
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h2>🔥 Hábitos de hoy</h2><div class="spacer"></div>
+          <button class="btn ghost sm" onclick="go('habitos')">Ver todos</button></div>
+        ${state.habitos.length ? state.habitos.map(h => habitRowHoy(h, hoy)).join('') : emptyBox('🌱','Sin hábitos aún','Crea tu primer hábito para empezar.')}
+      </div>
+    </div>
+
+    ${eventosHoy.length ? `
+    <div class="card" style="margin-top:16px">
+      <div class="card-h"><h2>🗓️ Agenda de hoy</h2></div>
+      ${eventosHoy.map(eventoRow).join('')}
+    </div>` : ''}
+  `;
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Buenos días';
+  if (h < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+function emptyBox(ico, t, s) { return `<div class="empty"><div class="big">${ico}</div><div style="font-weight:600;color:var(--text-soft)">${t}</div><div class="muted" style="margin-top:4px">${s||''}</div></div>`; }
+
+function habitRowHoy(h, hoy) {
+  const on = !!h.registros[hoy];
+  const s = streak(h);
+  return `<div class="task" style="cursor:pointer" onclick="toggleHabito('${h.id}','${hoy}')">
+    <div class="habit-ico" style="width:34px;height:34px;font-size:17px;background:${h.color}22">${h.icono}</div>
+    <div class="task-body"><div class="task-title">${esc(h.nombre)}</div>
+      <div class="task-meta">${s>0?`<span class="streak">🔥 ${s} día${s>1?'s':''}</span>`:'<span class="muted">Sin racha aún</span>'}</div></div>
+    <div class="chk ${on?'on':''}">${on?'✓':''}</div>
+  </div>`;
+}
+
+function eventoRow(e) {
+  const hora = e.inicio && e.inicio.length > 10 ? e.inicio.slice(11,16) : 'Todo el día';
+  return `<div class="task">
+    <div style="text-align:center;min-width:52px"><div style="font-weight:700;font-size:13px">${hora}</div></div>
+    <div class="task-body"><div class="task-title">${esc(e.titulo)}</div>
+      ${e.lugar?`<div class="task-meta"><span class="tag">📍 ${esc(e.lugar)}</span></div>`:''}</div>
+    <div class="task-actions">
+      <a class="icon-btn" href="${gcalLink(e)}" target="_blank" title="Añadir a Google Calendar">📅</a>
+      <button class="icon-btn" onclick="openEvento('${e.id}')">✏️</button>
+      <button class="icon-btn" onclick="delEvento('${e.id}')">🗑️</button></div>
+  </div>`;
+}
+
+/* ═══════════ TAREAS ═══════════ */
+let filtroTarea = 'pend';
+function renderTareas(v, sub) {
+  const total = state.tareas.length, done = state.tareas.filter(t=>t.estado).length;
+  sub.textContent = `${total-done} pendientes · ${done} completadas`;
+
+  let lista = [...state.tareas];
+  const hoy = todayStr();
+  if (filtroTarea === 'pend') lista = lista.filter(t => !t.estado);
+  else if (filtroTarea === 'hoy') lista = lista.filter(t => !t.estado && t.fechaLimite && t.fechaLimite <= hoy);
+  else if (filtroTarea === 'done') lista = lista.filter(t => t.estado);
+  // orden: por fecha límite, luego prioridad
+  const pOrd = { alta: 0, media: 1, baja: 2 };
+  lista.sort((a,b) => {
+    const fa = a.fechaLimite || '9999', fb = b.fechaLimite || '9999';
+    if (fa !== fb) return fa.localeCompare(fb);
+    return (pOrd[a.prioridad]??1) - (pOrd[b.prioridad]??1);
+  });
+
+  // agrupar por proyecto
+  const grupos = {};
+  lista.forEach(t => { const p = t.proyecto || 'Sin proyecto'; (grupos[p] = grupos[p] || []).push(t); });
+
+  v.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+      <div class="seg">
+        ${[['pend','Pendientes'],['hoy','Hoy'],['done','Hechas'],['all','Todas']].map(([k,l])=>
+          `<button class="${filtroTarea===k?'on':''}" onclick="setFiltroTarea('${k}')">${l}</button>`).join('')}
+      </div>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn primary" onclick="openTarea()">＋ Nueva tarea</button>
+    </div>
+    ${lista.length ? Object.entries(grupos).map(([p, arr]) => `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-h"><h2>${esc(p)}</h2><span class="muted">${arr.length}</span></div>
+        ${arr.map(taskHTML).join('')}
+      </div>`).join('')
+    : `<div class="card">${emptyBox('📋','No hay tareas aquí','Crea una nueva tarea para empezar.')}</div>`}
+  `;
+}
+function setFiltroTarea(f) { filtroTarea = f; render(); }
+
+function taskHTML(t) {
+  const hoy = todayStr();
+  const overdue = !t.estado && t.fechaLimite && t.fechaLimite < hoy;
+  return `<div class="task ${t.estado?'done':''}">
+    <div class="chk ${t.estado?'on':''}" onclick="toggleTarea('${t.id}')">${t.estado?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-title">${esc(t.titulo)}</div>
+      ${t.notas?`<div class="muted" style="margin-top:3px">${esc(t.notas)}</div>`:''}
+      <div class="task-meta">
+        ${t.fechaLimite?`<span class="tag ${overdue?'overdue':''}">📅 ${overdue?'Venció '+fechaCorta(t.fechaLimite):fechaCorta(t.fechaLimite)}</span>`:''}
+        <span class="tag p-${t.prioridad}">${{alta:'🔴 Alta',media:'🟡 Media',baja:'🟢 Baja'}[t.prioridad]||t.prioridad}</span>
+        ${t.proyecto&&vista!=='tareas'?`<span class="tag">🗂️ ${esc(t.proyecto)}</span>`:''}
+      </div>
+    </div>
+    <div class="task-actions">
+      <a class="icon-btn" href="${gcalLink(taskToEvent(t))}" target="_blank" title="Añadir a Google Calendar">📅</a>
+      <button class="icon-btn" onclick="openTarea('${t.id}')" title="Editar">✏️</button>
+      <button class="icon-btn" onclick="delTarea('${t.id}')" title="Eliminar">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function toggleTarea(id) {
+  const t = state.tareas.find(x => x.id === id);
+  if (!t) return;
+  t.estado = !t.estado;
+  if (t.estado) { t.completado = todayStr(); toast('Tarea completada ✨'); }
+  save(); renderNav(); render();
+}
+function delTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  state.tareas = state.tareas.filter(t => t.id !== id);
+  save(); renderNav(); render();
+}
+
+/* ═══════════ HÁBITOS ═══════════ */
+function renderHabitos(v, sub) {
+  sub.textContent = `${state.habitos.length} hábito${state.habitos.length!==1?'s':''} en seguimiento`;
+  const hoy = todayStr();
+  // últimos 21 días para el grid
+  const dias = []; for (let i = 20; i >= 0; i--) dias.push(addDays(hoy, -i));
+
+  v.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn primary" onclick="openHabito()">＋ Nuevo hábito</button>
+    </div>
+    ${state.habitos.length ? state.habitos.map(h => {
+      const on = !!h.registros[hoy];
+      const s = streak(h), best = bestStreak(h);
+      const done30 = last30(h);
+      return `<div class="habit">
+        <div class="habit-top">
+          <div class="habit-ico" style="background:${h.color}22;color:${h.color}">${h.icono}</div>
+          <div style="flex:1">
+            <div class="habit-name">${esc(h.nombre)}</div>
+            <div class="habit-sub">
+              <span class="streak">🔥 ${s} día${s!==1?'s':''}</span> · Mejor: ${best} · ${done30}% este mes
+            </div>
+          </div>
+          <div class="check-big ${on?'on':''}" onclick="toggleHabito('${h.id}','${hoy}')">${on?'✓':''}</div>
+          <button class="icon-btn" onclick="openHabito('${h.id}')">✏️</button>
+          <button class="icon-btn" onclick="delHabito('${h.id}')">🗑️</button>
+        </div>
+        <div class="habit-grid">
+          ${dias.map(d => {
+            const c = !!h.registros[d];
+            return `<div class="hcell ${c?'done':''} ${d===hoy?'today':''}" title="${fechaCorta(d)}" onclick="toggleHabito('${h.id}','${d}')" style="cursor:pointer${c?';background:'+h.color:''}"></div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('') : `<div class="card">${emptyBox('🌱','Aún no tienes hábitos','Los hábitos pequeños y constantes construyen grandes cambios.')}</div>`}
+  `;
+}
+
+function toggleHabito(id, fecha) {
+  const h = state.habitos.find(x => x.id === id);
+  if (!h) return;
+  if (h.registros[fecha]) delete h.registros[fecha];
+  else { h.registros[fecha] = true; if (fecha === todayStr()) toast('¡Hecho! 🔥 Racha: ' + streak(h)); }
+  save(); renderNav(); render();
+}
+function delHabito(id) {
+  if (!confirm('¿Eliminar este hábito y su historial?')) return;
+  state.habitos = state.habitos.filter(h => h.id !== id);
+  save(); renderNav(); render();
+}
+function streak(h) {
+  let n = 0, d = todayStr();
+  if (!h.registros[d]) d = addDays(d, -1); // permite que hoy aún no esté marcado
+  while (h.registros[d]) { n++; d = addDays(d, -1); }
+  return n;
+}
+function bestStreak(h) {
+  const dates = Object.keys(h.registros).filter(k => h.registros[k]).sort();
+  let best = 0, cur = 0, prev = null;
+  dates.forEach(d => {
+    if (prev && diffDays(d, prev) === 1) cur++; else cur = 1;
+    if (cur > best) best = cur; prev = d;
+  });
+  return best;
+}
+function last30(h) {
+  const hoy = todayStr(); let c = 0;
+  for (let i = 0; i < 30; i++) if (h.registros[addDays(hoy, -i)]) c++;
+  return Math.round(c / 30 * 100);
+}
+
+/* ═══════════ METAS ═══════════ */
+function renderMetas(v, sub) {
+  const act = state.metas.filter(m => m.estado === 'activa');
+  sub.textContent = `${act.length} activa${act.length!==1?'s':''} · ${state.metas.filter(m=>m.estado==='completada').length} completadas`;
+
+  v.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn primary" onclick="openMeta()">＋ Nueva meta</button>
+    </div>
+    ${state.metas.length ? state.metas.map(m => {
+      const dias = m.fechaObjetivo ? diffDays(m.fechaObjetivo, todayStr()) : null;
+      const vinc = state.tareas.filter(t => t.metaId === m.id);
+      const vincDone = vinc.filter(t => t.estado).length;
+      return `<div class="goal">
+        <div class="goal-top">
+          <div class="ring" style="--p:${m.progreso||0}"><span>${m.progreso||0}%</span></div>
+          <div style="flex:1">
+            <div class="goal-title">${esc(m.titulo)}</div>
+            ${m.descripcion?`<div class="muted" style="margin-top:3px">${esc(m.descripcion)}</div>`:''}
+            <div class="task-meta" style="margin-top:8px">
+              ${m.categoria?`<span class="tag">🏷️ ${esc(m.categoria)}</span>`:''}
+              ${m.fechaObjetivo?`<span class="tag ${dias<0&&m.estado==='activa'?'overdue':''}">🎯 ${dias<0?'Venció':(dias===0?'Hoy':'Faltan '+dias+' días')}</span>`:''}
+              ${vinc.length?`<span class="tag">✓ ${vincDone}/${vinc.length} tareas</span>`:''}
+              ${m.estado==='completada'?'<span class="tag p-baja">✅ Completada</span>':''}
+            </div>
+          </div>
+          <div class="task-actions" style="opacity:1;flex-direction:column">
+            <button class="icon-btn" onclick="openMeta('${m.id}')">✏️</button>
+            <button class="icon-btn" onclick="delMeta('${m.id}')">🗑️</button>
+          </div>
+        </div>
+        <div class="progress"><i style="width:${m.progreso||0}%"></i></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="btn sm ghost" onclick="ajustarMeta('${m.id}',-10)">−10%</button>
+          <button class="btn sm ghost" onclick="ajustarMeta('${m.id}',10)">+10%</button>
+          <div class="spacer" style="flex:1"></div>
+          ${m.estado!=='completada'?`<button class="btn sm" onclick="completarMeta('${m.id}')">✓ Marcar lograda</button>`:''}
+        </div>
+      </div>`;
+    }).join('') : `<div class="card">${emptyBox('🎯','Define tus metas','¿Qué quieres lograr este trimestre o este año?')}</div>`}
+  `;
+}
+function ajustarMeta(id, d) {
+  const m = state.metas.find(x => x.id === id); if (!m) return;
+  m.progreso = Math.max(0, Math.min(100, (m.progreso||0) + d));
+  if (m.progreso === 100) m.estado = 'completada';
+  else if (m.estado === 'completada') m.estado = 'activa';
+  save(); render();
+}
+function completarMeta(id) {
+  const m = state.metas.find(x => x.id === id); if (!m) return;
+  m.progreso = 100; m.estado = 'completada'; save(); render(); toast('¡Meta lograda! 🎉');
+}
+function delMeta(id) {
+  if (!confirm('¿Eliminar esta meta?')) return;
+  state.metas = state.metas.filter(m => m.id !== id); save(); render();
+}
+
+/* ═══════════ DIARIO Y NOTAS ═══════════ */
+const MOODS = ['😄','🙂','😐','😔','😣'];
+const MOOD_LBL = { '😄':'Genial','🙂':'Bien','😐':'Normal','😔':'Bajo','😣':'Difícil' };
+function renderDiario(v, sub) {
+  const lista = [...state.notas].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || (b.id>a.id?1:-1));
+  sub.textContent = `${state.notas.length} entrada${state.notas.length!==1?'s':''}`;
+  const hoy = todayStr();
+  const hoyEntry = state.notas.find(n => n.tipo === 'diario' && n.fecha === hoy);
+
+  v.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-h"><h2>📓 Diario de hoy</h2><span class="muted">${fechaLarga(hoy)}</span></div>
+      ${hoyEntry ? `
+        <div class="note-top"><span class="note-mood">${hoyEntry.animo||'📝'}</span>
+          <span class="muted">${hoyEntry.animo?MOOD_LBL[hoyEntry.animo]:''}</span>
+          <div class="spacer" style="flex:1"></div>
+          <button class="btn sm ghost" onclick="openNota('${hoyEntry.id}')">✏️ Editar</button></div>
+        <div class="note-content">${esc(hoyEntry.contenido)}</div>
+      ` : `
+        <p class="muted" style="margin-bottom:12px">¿Cómo va tu día? Escribe una reflexión.</p>
+        <button class="btn primary" onclick="openNota(null,'diario')">✍️ Escribir entrada de hoy</button>
+      `}
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <h2 style="font-family:'Space Grotesk';font-size:16px">Todas las entradas</h2>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn ghost sm" onclick="openNota(null,'nota')">＋ Nota rápida</button>
+    </div>
+    ${lista.length ? lista.map(n => `
+      <div class="note">
+        <div class="note-top">
+          ${n.animo?`<span class="note-mood">${n.animo}</span>`:`<span class="note-mood">${n.tipo==='diario'?'📓':'📝'}</span>`}
+          <div><div style="font-weight:600;font-size:13.5px">${esc(n.titulo || (n.tipo==='diario'?'Diario':'Nota'))}</div>
+          <div class="note-date">${fechaLarga(n.fecha||todayStr())}</div></div>
+          <div class="spacer" style="flex:1"></div>
+          <button class="icon-btn" onclick="openNota('${n.id}')">✏️</button>
+          <button class="icon-btn" onclick="delNota('${n.id}')">🗑️</button>
+        </div>
+        <div class="note-content">${esc(n.contenido)}</div>
+      </div>`).join('') : `<div class="card">${emptyBox('📓','Tu diario está vacío','Escribir un poco cada día ayuda a ver el progreso.')}</div>`}
+  `;
+}
+function delNota(id) {
+  if (!confirm('¿Eliminar esta entrada?')) return;
+  state.notas = state.notas.filter(n => n.id !== id); save(); render();
+}
+
+/* ═══════════ CALENDARIO ═══════════ */
+function renderCalendario(v, sub) {
+  if (!calRef) calRef = todayStr();
+  const ref = parseISO(calRef);
+  const year = ref.getFullYear(), month = ref.getMonth();
+  sub.textContent = 'Tareas, hábitos y eventos en un solo lugar';
+
+  const first = new Date(year, month, 1);
+  const startDow = (first.getDay() - state.config.inicioSemana + 7) % 7;
+  const start = new Date(year, month, 1 - startDow);
+  const hoy = todayStr();
+  const dowLabels = []; for (let i = 0; i < 7; i++) dowLabels.push(DOW[(state.config.inicioSemana + i) % 7]);
+
+  let cells = '';
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const iso = fmtISO(d);
+    const other = d.getMonth() !== month;
+    const items = dayItems(iso);
+    const pills = items.slice(0, 3).map(it => `<span class="cal-pill ${it.tipo} ${it.done?'done':''}">${esc(it.txt)}</span>`).join('');
+    const more = items.length > 3 ? `<span class="muted" style="font-size:10px">+${items.length-3} más</span>` : '';
+    cells += `<div class="cal-cell ${other?'other':''} ${iso===hoy?'today':''}" data-count="${items.length?'●'.repeat(Math.min(items.length,3)):''}" onclick="openDia('${iso}')">
+      <div class="dn">${d.getDate()}</div>${pills}${more}</div>`;
+  }
+
+  v.innerHTML = `
+    <div class="cal-head">
+      <button class="icon-btn" style="font-size:20px" onclick="calMove(-1)">‹</button>
+      <h2>${MESES[month]} ${year}</h2>
+      <button class="icon-btn" style="font-size:20px" onclick="calMove(1)">›</button>
+      <button class="btn ghost sm" onclick="calRef=todayStr();render()">Hoy</button>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn ghost sm" onclick="exportICS()">⬇️ Exportar .ics</button>
+      <button class="btn ghost sm" onclick="importICSPrompt()">⬆️ Importar .ics</button>
+      <button class="btn primary sm" onclick="openEvento()">＋ Evento</button>
+    </div>
+    <div class="cal-grid" style="margin-bottom:6px">${dowLabels.map(d => `<div class="cal-dow">${d}</div>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>
+    <div class="card" style="margin-top:18px">
+      <div class="card-h"><h2>Próximos eventos</h2></div>
+      ${proximosEventos()}
+    </div>
+  `;
+}
+function calMove(n) { const d = parseISO(calRef); d.setMonth(d.getMonth() + n); calRef = fmtISO(d); render(); }
+
+function dayItems(iso) {
+  const items = [];
+  state.eventos.filter(e => (e.inicio||'').slice(0,10) === iso).forEach(e =>
+    items.push({ tipo: 'event', txt: (e.inicio.length>10?e.inicio.slice(11,16)+' ':'') + e.titulo, done: false }));
+  state.tareas.filter(t => t.fechaLimite === iso).forEach(t =>
+    items.push({ tipo: 'task', txt: t.titulo, done: t.estado }));
+  return items;
+}
+function proximosEventos() {
+  const hoy = todayStr();
+  const evs = state.eventos.filter(e => (e.inicio||'').slice(0,10) >= hoy).sort((a,b)=>(a.inicio||'').localeCompare(b.inicio||'')).slice(0,6);
+  if (!evs.length) return emptyBox('🗓️','Sin eventos próximos','Agrega un evento o importa tu calendario.');
+  return evs.map(e => {
+    const iso = e.inicio.slice(0,10);
+    return `<div class="task">
+      <div style="text-align:center;min-width:56px"><div style="font-weight:700;font-size:13px">${fechaCorta(iso)}</div>
+        <div class="muted" style="font-size:11px">${e.inicio.length>10?e.inicio.slice(11,16):'Todo el día'}</div></div>
+      <div class="task-body"><div class="task-title">${esc(e.titulo)}</div>
+        ${e.lugar?`<div class="task-meta"><span class="tag">📍 ${esc(e.lugar)}</span></div>`:''}</div>
+      <div class="task-actions">
+        <a class="icon-btn" href="${gcalLink(e)}" target="_blank" title="Añadir a Google Calendar">📅</a>
+        <button class="icon-btn" onclick="openEvento('${e.id}')">✏️</button>
+        <button class="icon-btn" onclick="delEvento('${e.id}')">🗑️</button></div>
+    </div>`;
+  }).join('');
+}
+function openDia(iso) {
+  const items = dayItems(iso);
+  const cont = `
+    <div class="field"><label>${fechaLarga(iso).charAt(0).toUpperCase()+fechaLarga(iso).slice(1)}</label></div>
+    ${items.length ? items.map(it => `<div class="task"><div class="task-body"><div class="task-title">${it.tipo==='task'?'✓ ':'🗓️ '}${esc(it.txt)}</div></div></div>`).join('') : '<p class="muted">Nada agendado este día.</p>'}
+    <div class="divider"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" style="flex:1" onclick="closeModal();openTarea(null,'${iso}')">＋ Tarea</button>
+      <button class="btn" style="flex:1" onclick="closeModal();openEvento(null,'${iso}')">＋ Evento</button>
+    </div>`;
+  showModal('📅 ' + fechaCorta(iso), cont, null, 'Cerrar');
+}
+
+/* ═══════════ MODALES / FORMULARIOS ═══════════ */
+function showModal(titulo, bodyHTML, onSave, saveLabel) {
+  const m = document.getElementById('modal');
+  m.innerHTML = `
+    <div class="modal-h"><h3>${titulo}</h3><div class="spacer" style="flex:1"></div><button class="icon-btn" style="font-size:20px" onclick="closeModal()">✕</button></div>
+    <div class="modal-b">${bodyHTML}</div>
+    <div class="modal-f">
+      <button class="btn ghost" onclick="closeModal()">${onSave ? 'Cancelar' : (saveLabel||'Cerrar')}</button>
+      ${onSave ? `<button class="btn primary" id="modal-save">${saveLabel||'Guardar'}</button>` : ''}
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+  if (onSave) document.getElementById('modal-save').onclick = onSave;
+  const first = m.querySelector('input,textarea,select'); if (first) setTimeout(()=>first.focus(), 50);
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ── Tarea ── */
+function openTarea(id, fecha) {
+  const t = id ? state.tareas.find(x => x.id === id) : null;
+  const proyOpts = state.proyectos.map(p => `<option ${t&&t.proyecto===p?'selected':''}>${esc(p)}</option>`).join('');
+  const metaOpts = '<option value="">— Sin meta —</option>' + state.metas.filter(m=>m.estado==='activa').map(m => `<option value="${m.id}" ${t&&t.metaId===m.id?'selected':''}>${esc(m.titulo)}</option>`).join('');
+  showModal(id ? 'Editar tarea' : 'Nueva tarea', `
+    <div class="field"><label>Título</label><input id="f-titulo" value="${t?esc(t.titulo):''}" placeholder="¿Qué necesitas hacer?"></div>
+    <div class="field"><label>Notas (opcional)</label><textarea id="f-notas" placeholder="Detalles…">${t?esc(t.notas):''}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Fecha límite</label><input type="date" id="f-fecha" value="${t?t.fechaLimite||'':fecha||''}"></div>
+      <div class="field"><label>Prioridad</label><select id="f-prio">
+        ${['alta','media','baja'].map(p=>`<option value="${p}" ${(t?t.prioridad:'media')===p?'selected':''}>${{alta:'🔴 Alta',media:'🟡 Media',baja:'🟢 Baja'}[p]}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Proyecto</label><select id="f-proy">${proyOpts}</select></div>
+      <div class="field"><label>Meta vinculada</label><select id="f-meta">${metaOpts}</select></div>
+    </div>
+  `, () => {
+    const titulo = val('f-titulo').trim();
+    if (!titulo) { toast('Escribe un título', 'err'); return; }
+    const data = { titulo, notas: val('f-notas').trim(), fechaLimite: val('f-fecha'), prioridad: val('f-prio'), proyecto: val('f-proy'), metaId: val('f-meta') || null };
+    if (t) Object.assign(t, data);
+    else state.tareas.push(Object.assign({ id: uid(), estado: false, creado: todayStr() }, data));
+    save(); closeModal(); renderNav(); render(); toast(id ? 'Tarea actualizada' : 'Tarea creada');
+  }, id ? 'Guardar' : 'Crear');
+}
+
+/* ── Hábito ── */
+const ICONOS = ['💧','🏃','📚','🧘','💪','🥗','😴','🚭','☀️','✍️','🎸','🎨','💊','🦷','🌱','💰','📵','🧹','☕','🙏'];
+const COLORES = ['#8b7ff5','#34d3c0','#f5b544','#f56d8b','#5aa2f5','#4ade80'];
+let _habIco = '💧', _habCol = '#8b7ff5';
+function openHabito(id) {
+  const h = id ? state.habitos.find(x => x.id === id) : null;
+  _habIco = h ? h.icono : '💧'; _habCol = h ? h.color : '#8b7ff5';
+  showModal(id ? 'Editar hábito' : 'Nuevo hábito', `
+    <div class="field"><label>Nombre del hábito</label><input id="f-nombre" value="${h?esc(h.nombre):''}" placeholder="Ej: Beber agua, Leer, Ejercicio…"></div>
+    <div class="field"><label>Icono</label><div class="ico-pick" id="ico-pick">
+      ${ICONOS.map(i => `<button class="${i===_habIco?'on':''}" onclick="pickIco('${i}')">${i}</button>`).join('')}
+    </div></div>
+    <div class="field"><label>Color</label><div class="chips">
+      ${COLORES.map(c => `<button class="chip ${c===_habCol?'on':''}" style="border-color:${c}" onclick="pickCol('${c}')"><span style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></span></button>`).join('')}
+    </div></div>
+  `, () => {
+    const nombre = val('f-nombre').trim();
+    if (!nombre) { toast('Escribe un nombre', 'err'); return; }
+    if (h) { h.nombre = nombre; h.icono = _habIco; h.color = _habCol; }
+    else state.habitos.push({ id: uid(), nombre, icono: _habIco, color: _habCol, meta: 'diario', registros: {}, creado: todayStr() });
+    save(); closeModal(); renderNav(); render(); toast(id ? 'Hábito actualizado' : 'Hábito creado');
+  }, id ? 'Guardar' : 'Crear');
+}
+function pickIco(i) { _habIco = i; document.querySelectorAll('#ico-pick button').forEach(b => b.classList.toggle('on', b.textContent === i)); }
+function pickCol(c) { _habCol = c; document.querySelectorAll('.chips .chip').forEach(b => b.classList.toggle('on', b.style.borderColor === c || rgbEq(b.style.borderColor, c))); }
+function rgbEq(a, b) { return false; }
+
+/* ── Meta ── */
+function openMeta(id) {
+  const m = id ? state.metas.find(x => x.id === id) : null;
+  showModal(id ? 'Editar meta' : 'Nueva meta', `
+    <div class="field"><label>Meta / objetivo</label><input id="f-titulo" value="${m?esc(m.titulo):''}" placeholder="Ej: Leer 12 libros este año"></div>
+    <div class="field"><label>Descripción (opcional)</label><textarea id="f-desc" placeholder="¿Por qué es importante? ¿Cómo lo lograrás?">${m?esc(m.descripcion):''}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Categoría</label><input id="f-cat" value="${m?esc(m.categoria):''}" placeholder="Salud, Carrera, Finanzas…"></div>
+      <div class="field"><label>Fecha objetivo</label><input type="date" id="f-fecha" value="${m?m.fechaObjetivo||'':''}"></div>
+    </div>
+    <div class="field"><label>Progreso: <b id="pval">${m?m.progreso||0:0}</b>%</label>
+      <input type="range" min="0" max="100" step="5" id="f-prog" value="${m?m.progreso||0:0}" oninput="document.getElementById('pval').textContent=this.value"></div>
+  `, () => {
+    const titulo = val('f-titulo').trim();
+    if (!titulo) { toast('Escribe la meta', 'err'); return; }
+    const prog = +val('f-prog');
+    const data = { titulo, descripcion: val('f-desc').trim(), categoria: val('f-cat').trim(), fechaObjetivo: val('f-fecha'), progreso: prog, estado: prog >= 100 ? 'completada' : 'activa' };
+    if (m) Object.assign(m, data);
+    else state.metas.push(Object.assign({ id: uid(), creado: todayStr() }, data));
+    save(); closeModal(); render(); toast(id ? 'Meta actualizada' : 'Meta creada');
+  }, id ? 'Guardar' : 'Crear');
+}
+
+/* ── Nota / Diario ── */
+let _notaMood = '';
+function openNota(id, tipo) {
+  const n = id ? state.notas.find(x => x.id === id) : null;
+  tipo = n ? n.tipo : (tipo || 'nota');
+  _notaMood = n ? (n.animo || '') : '';
+  const esDiario = tipo === 'diario';
+  showModal(id ? 'Editar entrada' : (esDiario ? 'Entrada de diario' : 'Nueva nota'), `
+    ${!esDiario ? `<div class="field"><label>Título</label><input id="f-titulo" value="${n?esc(n.titulo):''}" placeholder="Título de la nota"></div>` : ''}
+    ${esDiario ? `<div class="field"><label>¿Cómo te sientes hoy?</label><div class="mood-pick" id="mood-pick">
+      ${MOODS.map(mo => `<button class="${mo===_notaMood?'on':''}" onclick="pickMood('${mo}')">${mo}</button>`).join('')}
+    </div></div>` : ''}
+    <div class="field"><label>${esDiario ? 'Tu reflexión de hoy' : 'Contenido'}</label>
+      <textarea id="f-cont" style="min-height:140px" placeholder="${esDiario?'¿Qué pasó hoy? ¿Qué aprendiste? ¿Por qué estás agradecido?':'Escribe aquí…'}">${n?esc(n.contenido):''}</textarea></div>
+    <input type="hidden" id="f-fecha" value="${n?n.fecha:todayStr()}">
+    <input type="hidden" id="f-tipo" value="${tipo}">
+  `, () => {
+    const cont = val('f-cont').trim();
+    if (!cont) { toast('Escribe algo', 'err'); return; }
+    const data = { tipo, contenido: cont, animo: _notaMood, fecha: val('f-fecha'), titulo: esDiario ? '' : (val('f-titulo').trim() || 'Nota') };
+    if (n) Object.assign(n, data);
+    else state.notas.push(Object.assign({ id: uid() }, data));
+    save(); closeModal(); render(); toast('Guardado 📝');
+  }, id ? 'Guardar' : 'Guardar');
+}
+function pickMood(m) { _notaMood = m; document.querySelectorAll('#mood-pick button').forEach(b => b.classList.toggle('on', b.textContent === m)); }
+
+/* ── Evento ── */
+function openEvento(id, fecha) {
+  const e = id ? state.eventos.find(x => x.id === id) : null;
+  const ini = e ? e.inicio : (fecha ? fecha + 'T09:00' : todayStr() + 'T09:00');
+  const fin = e && e.fin ? e.fin : (fecha ? fecha + 'T10:00' : todayStr() + 'T10:00');
+  showModal(id ? 'Editar evento' : 'Nuevo evento', `
+    <div class="field"><label>Título</label><input id="f-titulo" value="${e?esc(e.titulo):''}" placeholder="Nombre del evento"></div>
+    <div class="field-row">
+      <div class="field"><label>Inicio</label><input type="datetime-local" id="f-ini" value="${ini}"></div>
+      <div class="field"><label>Fin</label><input type="datetime-local" id="f-fin" value="${fin}"></div>
+    </div>
+    <div class="field"><label>Lugar (opcional)</label><input id="f-lugar" value="${e?esc(e.lugar):''}" placeholder="Dónde"></div>
+    <div class="field"><label>Notas (opcional)</label><textarea id="f-notas" placeholder="Detalles…">${e?esc(e.notas):''}</textarea></div>
+    ${e ? `<a class="btn ghost sm" style="align-self:flex-start" href="${gcalLink(e)}" target="_blank">📅 Añadir a Google Calendar</a>` : ''}
+  `, () => {
+    const titulo = val('f-titulo').trim();
+    if (!titulo) { toast('Escribe un título', 'err'); return; }
+    const data = { titulo, inicio: val('f-ini'), fin: val('f-fin'), lugar: val('f-lugar').trim(), notas: val('f-notas').trim() };
+    if (e) Object.assign(e, data);
+    else state.eventos.push(Object.assign({ id: uid() }, data));
+    save(); closeModal(); render(); toast(id ? 'Evento actualizado' : 'Evento creado');
+  }, id ? 'Guardar' : 'Crear');
+}
+function delEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return;
+  state.eventos = state.eventos.filter(e => e.id !== id); save(); render();
+}
+
+/* ═══════════ GOOGLE CALENDAR / ICS ═══════════ */
+function gcalFmt(dtLocal, allDay) {
+  // dtLocal: 'YYYY-MM-DD' o 'YYYY-MM-DDTHH:MM'
+  if (!dtLocal) return '';
+  if (dtLocal.length <= 10 || allDay) return dtLocal.replace(/-/g, '');
+  const [d, t] = dtLocal.split('T');
+  return d.replace(/-/g, '') + 'T' + (t.replace(':', '') + '00').slice(0,6);
+}
+function gcalLink(ev) {
+  if (!ev) return '#';
+  const allDay = !ev.inicio || ev.inicio.length <= 10;
+  let ini = ev.inicio || todayStr();
+  let fin = ev.fin || (allDay ? addDays(ini, 1) : ini);
+  const dates = allDay
+    ? gcalFmt(ini, true) + '/' + gcalFmt(fin.length<=10?fin:addDays(ini,1), true)
+    : gcalFmt(ini) + '/' + gcalFmt(fin);
+  const p = new URLSearchParams({ action: 'TEMPLATE', text: ev.titulo || 'Evento', dates,
+    details: ev.notas || '', location: ev.lugar || '' });
+  return 'https://calendar.google.com/calendar/render?' + p.toString();
+}
+function taskToEvent(t) {
+  return { titulo: '✓ ' + t.titulo, inicio: t.fechaLimite || todayStr(), fin: t.fechaLimite || todayStr(), notas: t.notas || '', lugar: '' };
+}
+
+function icsDate(dtLocal, allDay) {
+  if (allDay || dtLocal.length <= 10) return dtLocal.replace(/-/g, '');
+  const [d, t] = dtLocal.split('T');
+  return d.replace(/-/g, '') + 'T' + (t.replace(':','') + '00').slice(0,6);
+}
+function exportICS() {
+  let lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//MiVida//OS Personal//ES','CALSCALE:GREGORIAN'];
+  const push = (uidv, title, ini, fin, allDay, notas, loc) => {
+    lines.push('BEGIN:VEVENT', 'UID:' + uidv + '@mivida',
+      (allDay ? 'DTSTART;VALUE=DATE:' : 'DTSTART:') + icsDate(ini, allDay),
+      (allDay ? 'DTEND;VALUE=DATE:' : 'DTEND:') + icsDate(fin, allDay),
+      'SUMMARY:' + icsEsc(title));
+    if (notas) lines.push('DESCRIPTION:' + icsEsc(notas));
+    if (loc) lines.push('LOCATION:' + icsEsc(loc));
+    lines.push('END:VEVENT');
+  };
+  state.eventos.forEach(e => {
+    const allDay = e.inicio.length <= 10;
+    push(e.id, e.titulo, e.inicio, e.fin || (allDay ? addDays(e.inicio,1) : e.inicio), allDay, e.notas, e.lugar);
+  });
+  state.tareas.filter(t => t.fechaLimite && !t.estado).forEach(t => {
+    push(t.id, '✓ ' + t.titulo, t.fechaLimite, addDays(t.fechaLimite, 1), true, t.notas, '');
+  });
+  lines.push('END:VCALENDAR');
+  descargar('mi-vida.ics', lines.join('\r\n'), 'text/calendar');
+  toast('Calendario exportado (.ics)');
+}
+function icsEsc(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+
+function importICSPrompt() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.ics,text/calendar';
+  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => importICS(r.result); r.readAsText(f); };
+  inp.click();
+}
+function importICS(text) {
+  const blocks = text.split(/BEGIN:VEVENT/i).slice(1);
+  let n = 0;
+  blocks.forEach(b => {
+    const body = b.split(/END:VEVENT/i)[0];
+    const get = (re) => { const m = body.match(re); return m ? m[1].trim() : ''; };
+    const title = icsUnesc(get(/SUMMARY:(.*)/i));
+    const dts = get(/DTSTART[^:]*:(.*)/i);
+    const dte = get(/DTEND[^:]*:(.*)/i);
+    if (!title || !dts) return;
+    const parse = (v) => {
+      v = v.trim();
+      if (/^\d{8}$/.test(v)) return v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);
+      if (/^\d{8}T\d{6}/.test(v)) return v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8)+'T'+v.slice(9,11)+':'+v.slice(11,13);
+      return v;
+    };
+    state.eventos.push({ id: uid(), titulo: title, inicio: parse(dts), fin: dte?parse(dte):parse(dts),
+      lugar: icsUnesc(get(/LOCATION:(.*)/i)), notas: icsUnesc(get(/DESCRIPTION:(.*)/i)) });
+    n++;
+  });
+  save(); render();
+  toast(n ? `${n} evento${n>1?'s':''} importado${n>1?'s':''}` : 'No se encontraron eventos', n ? 'ok' : 'err');
+}
+function icsUnesc(s) { return String(s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\'); }
+
+function descargar(nombre, contenido, mime) {
+  const blob = new Blob([contenido], { type: mime || 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+}
+
+/* ═══════════ AJUSTES / DATOS ═══════════ */
+function openAjustes() {
+  showModal('⚙️ Ajustes y datos', `
+    <div class="field"><label>Tu nombre</label><input id="f-nombre" value="${esc(state.config.nombre)}" placeholder="¿Cómo te llamas?"></div>
+    <div class="field"><label>La semana empieza en</label><select id="f-inicio">
+      <option value="1" ${state.config.inicioSemana===1?'selected':''}>Lunes</option>
+      <option value="0" ${state.config.inicioSemana===0?'selected':''}>Domingo</option>
+    </select></div>
+    <div class="divider"></div>
+    <div class="field"><label>Proyectos (separados por coma)</label>
+      <input id="f-proyectos" value="${esc(state.proyectos.join(', '))}"></div>
+    <div class="divider"></div>
+    <div>
+      <label style="display:block;font-size:12.5px;color:var(--text-soft);margin-bottom:8px;font-weight:600">Copia de seguridad</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn sm" onclick="exportJSON()">⬇️ Exportar todo (JSON)</button>
+        <button class="btn sm" onclick="importJSONPrompt()">⬆️ Importar (JSON)</button>
+        <button class="btn sm danger" onclick="borrarTodo()">🗑️ Borrar todo</button>
+      </div>
+      <p class="muted" style="margin-top:10px">Tus datos se guardan solo en este navegador. Exporta una copia de vez en cuando.</p>
+    </div>
+    <div class="divider"></div>
+    <p class="muted">💡 ¿Quieres sincronizar con tu Google Calendar real? Pídele a Claude en el chat: "sincroniza mis eventos con mi Google Calendar" y él puede leer y crear eventos por ti.</p>
+  `, () => {
+    state.config.nombre = val('f-nombre').trim();
+    state.config.inicioSemana = +val('f-inicio');
+    state.proyectos = val('f-proyectos').split(',').map(s => s.trim()).filter(Boolean);
+    if (!state.proyectos.length) state.proyectos = ['Personal'];
+    save(); closeModal(); render(); toast('Ajustes guardados');
+  }, 'Guardar');
+}
+function exportJSON() { descargar('mi-vida-backup.json', JSON.stringify(state, null, 2), 'application/json'); toast('Backup descargado'); }
+function importJSONPrompt() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = () => { try { const s = JSON.parse(r.result); if (!confirm('Esto reemplazará todos tus datos actuales. ¿Continuar?')) return;
+      state = Object.assign({ _seq: 0, proyectos: ['Personal'], config: {} }, s); save(); closeModal(); renderNav(); render(); toast('Datos importados'); }
+      catch (e) { toast('Archivo inválido', 'err'); } };
+    r.readAsText(f); };
+  inp.click();
+}
+function borrarTodo() {
+  if (!confirm('¿Borrar TODOS tus datos? Esto no se puede deshacer. Considera exportar una copia primero.')) return;
+  if (!confirm('¿Seguro? Última confirmación.')) return;
+  localStorage.removeItem(STORE_KEY);
+  state = { _seq: 0, tareas: [], habitos: [], metas: [], notas: [], eventos: [], proyectos: ['Personal','Trabajo','Salud','Hogar'], config: { nombre: '', inicioSemana: 1 } };
+  save(); closeModal(); go('hoy'); toast('Todo borrado');
+}
+
+/* ═══════════ QUICK ADD ═══════════ */
+function quickAdd() {
+  showModal('¿Qué quieres crear?', `
+    <div class="chips" style="flex-direction:column">
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openTarea()">✓ &nbsp; Nueva tarea</button>
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openHabito()">🔥 &nbsp; Nuevo hábito</button>
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openMeta()">🎯 &nbsp; Nueva meta</button>
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openEvento()">🗓️ &nbsp; Nuevo evento</button>
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openNota(null,'diario')">📓 &nbsp; Entrada de diario</button>
+      <button class="btn" style="justify-content:flex-start" onclick="closeModal();openNota(null,'nota')">📝 &nbsp; Nota rápida</button>
+    </div>
+  `, null, 'Cerrar');
+}
+
+/* ── helpers ── */
+function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+/* ═══════════ INIT ═══════════ */
+function init() {
+  load();
+  const hoy = todayStr();
+  document.getElementById('foot-date').textContent = fechaLarga(hoy).charAt(0).toUpperCase() + fechaLarga(hoy).slice(1);
+  renderNav();
+  render();
+}
+init();
+</script>
+</body>
+</html>
